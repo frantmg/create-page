@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G3 · Footer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEE;font-family:Inter, system-ui, sans-serif;color:#0A0A0A}
+.doc-head{padding:40px 48px 8px}
+.doc-head h1{margin:0 0 6px;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.doc-head p{margin:0;font-size:15px;color:#5F646D}
+.doc-label{padding:32px 48px 12px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#5F646D}
+.doc-frame{padding:0 48px;overflow-x:auto}
+.doc-frame > div{box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06)}
+.doc-end{height:64px}
+/* ---------- component styles ---------- */
+/* desktop */
+.v-desktop a{color:#1463FF}
+.v-desktop a:hover{color:#0B47C4}
+.v-desktop .ey{display:flex;align-items:center;gap:14px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1463FF}
+.v-desktop .ey:before{content:"";width:28px;height:2px;background:currentColor}
+.v-desktop .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 30px;border-radius:999px;background:#1463FF;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;white-space:nowrap;border:0;font-family:inherit}
+.v-desktop .btn.sm{min-height:44px;padding:0 22px;font-size:12px}
+.v-desktop .nav{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#0A0A0A;text-decoration:none}
+.v-desktop .mm{display:flex;flex-direction:column;gap:14px}
+.v-desktop .mm span{font-size:15px;color:#0A0A0A;font-weight:500}
+.v-desktop .mm span.mh{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#1463FF;margin-bottom:4px}
+.v-desktop .img{background:#D5D9DF;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;color:#5F646D;font-size:12px;font-weight:600;letter-spacing:.04em}
+.v-desktop .fh{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6E9BFF;margin-bottom:8px}
+.v-desktop .fl{display:flex;flex-direction:column;gap:12px;font-size:14.5px;color:#fff;font-weight:500}
+.v-desktop .ph{width:300px;height:640px;border-radius:40px;background:#fff;box-shadow:0 0 0 10px #0A0A0A;overflow:hidden;display:flex;flex-direction:column;flex:none}
+.v-desktop .mrow{padding:18px 22px;border-bottom:1px solid #E3E6EA;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between}
+/* mobile */
+.v-mobile a{color:#1463FF}
+.v-mobile a:hover{color:#0B47C4}
+.v-mobile .ey{display:flex;align-items:center;gap:14px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1463FF}
+.v-mobile .ey:before{content:"";width:28px;height:2px;background:currentColor}
+.v-mobile .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 30px;border-radius:999px;background:#1463FF;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;white-space:nowrap;border:0;font-family:inherit}
+.v-mobile .btn.sm{min-height:44px;padding:0 22px;font-size:12px}
+.v-mobile .nav{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#0A0A0A;text-decoration:none}
+.v-mobile .mm{display:flex;flex-direction:column;gap:14px}
+.v-mobile .mm span{font-size:15px;color:#0A0A0A;font-weight:500}
+.v-mobile .mm span.mh{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#1463FF;margin-bottom:4px}
+.v-mobile .img{background:#D5D9DF;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;color:#5F646D;font-size:12px;font-weight:600;letter-spacing:.04em}
+.v-mobile .fh{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6E9BFF;margin-bottom:8px}
+.v-mobile .fl{display:flex;flex-direction:column;gap:12px;font-size:14.5px;color:#fff;font-weight:500}
+.v-mobile .ph{width:100%;height:747px;border-radius:40px;background:#fff;box-shadow:0 0 0 10px #0A0A0A;overflow:hidden;display:flex;flex-direction:column;flex:none;box-sizing:border-box}
+.v-mobile .mrow{padding:18px 22px;border-bottom:1px solid #E3E6EA;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between}
+.v-mobile .btn{white-space:normal;text-align:center}
+</style>
+</head>
+<body>
+<header class="doc-head"><h1>G3 · Footer</h1><p>Black · accent headings · legal bar</p></header>
+<div class="doc-label">Desktop · 1440 px</div>
+<section class="doc-frame v-desktop">
+<div style="width:1440px;min-height:446px;background:#fff;font-family:Inter, system-ui, sans-serif;color:#0A0A0A;display:flex;flex-direction:column">
+<div style="background:#0A0A0A;color:#fff;padding:96px 120px 0">
+<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:64px;padding-bottom:72px">
+<div style="display:flex;flex-direction:column;gap:22px"><div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;background:#1463FF"></div><span style="font-size:22px;font-weight:800;letter-spacing:-.02em">[Practice Name]</span></div><p style="margin:0;font-size:15px;line-height:1.7;color:#B4B8C0;max-width:340px">Chiropractic, spine and orthopedic care across [Region] since [Year] — one team, from first adjustment to surgery and recovery.</p><div style="display:flex;gap:10px"><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span></div></div>
+<div class="fl"><span class="fh">Care</span><span>Treatments</span><span>Conditions</span><span>Providers</span><span>Request an appointment</span></div>
+<div class="fl"><span class="fh">Patients</span><span>New patient guide</span><span>Patient forms</span><span>Insurance &amp; billing</span><span>Patient portal</span></div>
+<div class="fl"><span class="fh">Locations</span><span>[Downtown] · (555) 555-0123</span><span>[Northside] · (555) 555-0124</span><span>[Westlake] · (555) 555-0125</span><span>All locations</span></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #2A2D33;padding:28px 0 32px;font-size:13px;color:#9AA0AA"><span>© 2026 [Practice Name]. All rights reserved.</span><div style="display:flex;gap:24px"><span>Privacy policy</span><span>HIPAA notice</span><span>Accessibility</span><span>Non-discrimination</span><span>Terms</span></div></div>
+</div>
+</div>
+</section>
+<div class="doc-label">Mobile · 390 px</div>
+<section class="doc-frame v-mobile">
+<div style="width:390px;min-height:777px;background:#fff;font-family:Inter, system-ui, sans-serif;color:#0A0A0A;display:flex;flex-direction:column">
+<div style="background:#0A0A0A;color:#fff;padding:56px 20px 0">
+<div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:32px;padding-bottom:48px">
+<div style="display:flex;flex-direction:column;gap:22px"><div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;background:#1463FF"></div><span style="font-size:22px;font-weight:800;letter-spacing:-.02em">[Practice Name]</span></div><p style="margin:0;font-size:15px;line-height:1.7;color:#B4B8C0;max-width:340px">Chiropractic, spine and orthopedic care across [Region] since [Year] — one team, from first adjustment to surgery and recovery.</p><div style="display:flex;gap:10px"><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span><span style="width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3A3D44"></span></div></div>
+<div class="fl"><span class="fh">Care</span><span>Treatments</span><span>Conditions</span><span>Providers</span><span>Request an appointment</span></div>
+<div class="fl"><span class="fh">Patients</span><span>New patient guide</span><span>Patient forms</span><span>Insurance &amp; billing</span><span>Patient portal</span></div>
+<div class="fl"><span class="fh">Locations</span><span>[Downtown] · (555) 555-0123</span><span>[Northside] · (555) 555-0124</span><span>[Westlake] · (555) 555-0125</span><span>All locations</span></div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px;justify-content:space-between;border-top:1px solid #2A2D33;padding:28px 0 32px;font-size:13px;color:#9AA0AA"><span>© 2026 [Practice Name]. All rights reserved.</span><div style="display:flex;gap:12px 20px;flex-wrap:wrap"><span>Privacy policy</span><span>HIPAA notice</span><span>Accessibility</span><span>Non-discrimination</span><span>Terms</span></div></div>
+</div>
+</div>
+</section>
+<div class="doc-end"></div>
+</body>
+</html>

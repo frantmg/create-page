@@ -1,0 +1,21 @@
+# Changelog
+
+Newest first. Versions follow the rules in START-HERE.md section 9.
+
+- **6.1.1** (2026-11-09): Block descriptions now describe the layout only; references to outside sites removed.
+- **6.1.0** (2026-11-09): Plan approval now shows a wireframe built from the library blocks.
+- **6.0.4** (2026-11-06): Steps aligned instead of staggered; block CSS no longer copied into pages; QA checks row alignment and uppercase buttons.
+- **6.0.3** (2026-11-06): Alignment rules and checks; offsets snap to the grid.
+- **6.0.2** (2026-11-06): Final page is always published as an artifact with a share link; revisions keep the same link.
+- **6.0.1** (2026-11-06): Logo is always passed to the designer, embedded, placed on a contrasting background, and checked in QA.
+- **6.0.0** (2026-11-06): Plain single-file HTML pages, no build tools or installs; inline preview in chat; bundled axe-core; faster QA and fix rounds.
+- **5.0.0** (2026-11-06): Moved from a single skill to a public GitHub kit loaded by a small `/create-page` loader skill. Rules split into files under `rules/`, the 47 original block HTML files added under `blocks/`, scripts and the build scaffold added as real files, agent roles under `agents/` (and `.claude/agents/` for Claude Code). Releases are published as tags; the loader only uses released versions.
+- **4.0.0** (2026-11-06): Split the build into a relay of three agents: page-content (block plan and every word, in content.json), page-designer (design and build, renders content.json and never edits copy; sends copy change requests instead) and page-qa (independent review). The orchestrator routes QA findings to the agent that owns them. readability.py now grades content.json directly.
+- **3.0.0** (2026-11-06): Runs as a team: the orchestrator does the intake and writes a brief, the page-builder agent builds, and a fresh page-qa agent reviews independently (copy and brief, compliance, design quality, mobile, ADA / WCAG 2.2 AA), with up to 2 auto-fix rounds before delivery. New qa.py replaces shot.py (adds axe-core, keyboard focus, 320px reflow, tap targets, input size). QA report format and severity rules added.
+- **2.2.1** (2026-11-06): Default shadows are now wider and more transparent (large blur, negative spread, low opacity, brand-tinted) when the brand guide does not specify shadows; MUI's shallow default elevations are replaced in the theme scaffold.
+- **2.2.0** (2026-11-06): Round 3 now also asks whether the practice has a current website and whether there is a benchmark site. The current site is read for facts and brand cues; the benchmark is used for structure ideas only, with brand guidelines driving every design decision.
+- **2.1.0** (2026-11-06): Added the typography standards from Landing Page Visual Art Direction Standards (Nov 4, 2026): brand fonts first with load check and flagged substitutes, one coherent type scale per project from set desktop/mobile ranges, weight, line length, headline shape, tracking, uppercase and eyebrow rules, plus a typography check and a loaded-fonts report in shot.py.
+- **2.0.1** (2026-11-02): Conversion mode no longer gives design instructions. It now covers content, order, actions and forms only; all visual design comes from section 5. Speed budget moved to the build rules; added a check that conversion pages are not plainer than other pages.
+- **2.0.0** (2026-11-02): New design and build approach. Pages are art-directed with the frontend-design method (design plan and review, cliché list, editorial type pairings, brand-built color and gradients, strong asymmetry, zero fluff padding, two motion moments) and built as React + MUI + Tailwind CSS v4 projects with a single-file preview. Conversion mode kept; its design rules and speed budget updated.
+- **1.1.0** (2026-11-02): Added conversion mode from the Landing Page Build Guide (Oct 28, 2026): conversion intake round (keyword, traffic, lead flow, proof), conversion recipe, max 2 actions, message match, VSL, multi-step and quiz forms, FAQ below the form, keyword block, speed budget, above-the-fold and launch compliance checks.
+- **1.0.0** (2026-11-02): First release. Guided intake in 3 rounds, Macallan block library (47 blocks), page recipes, Material 3 build, 5th-grade copy checker, healthcare compliance checks.

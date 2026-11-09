@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M26 · Testimonials · B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEE;font-family:Inter, system-ui, sans-serif;color:#0A0A0A}
+.doc-head{padding:40px 48px 8px}
+.doc-head h1{margin:0 0 6px;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.doc-head p{margin:0;font-size:15px;color:#5F646D}
+.doc-label{padding:32px 48px 12px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#5F646D}
+.doc-frame{padding:0 48px;overflow-x:auto}
+.doc-frame > div{box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06)}
+.doc-end{height:64px}
+/* ---------- component styles ---------- */
+/* desktop */
+.v-desktop a{color:#1463FF}
+.v-desktop a:hover{color:#0B47C4}
+.v-desktop .s{background:#fff;padding:112px 120px}
+.v-desktop .g{background:#F5F6F8}
+.v-desktop .ey{display:flex;align-items:center;gap:14px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1463FF}
+.v-desktop .ey:before{content:"";width:28px;height:2px;background:currentColor}
+.v-desktop .h2{margin:0;font-size:44px;line-height:1.1;font-weight:800;letter-spacing:-.025em}
+.v-desktop .h4{margin:0;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.v-desktop .lead{margin:0;font-size:19px;line-height:1.6;color:#5F646D}
+.v-desktop .p{margin:0;font-size:16px;line-height:1.65;color:#5F646D}
+.v-desktop .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 30px;border-radius:999px;background:#1463FF;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;white-space:nowrap;border:0;font-family:inherit}
+.v-desktop .btn.o{background:transparent;color:#0A0A0A;box-shadow:inset 0 0 0 1.5px #0A0A0A}
+.v-desktop .btn.w{background:#fff;color:#0A0A0A}
+.v-desktop .btn.wo{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px #fff}
+.v-desktop .lk{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#0A0A0A;text-decoration:none;display:inline-flex;gap:10px;align-items:center;border-bottom:2px solid #1463FF;padding-bottom:4px;align-self:flex-start}
+.v-desktop .img{background:#D5D9DF;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;color:#5F646D;font-size:12px;font-weight:600;letter-spacing:.04em}
+.v-desktop .hd{display:flex;flex-direction:column;gap:20px;max-width:720px}
+.v-desktop .stars{color:#1463FF;font-size:16px;letter-spacing:3px}
+.v-desktop .ck{display:flex;gap:12px;align-items:center;font-size:15.5px}
+.v-desktop .fld{display:flex;flex-direction:column;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0A0A0A}
+.v-desktop .in{min-height:52px;border:0;box-shadow:inset 0 0 0 1.5px #D5D9DF;background:#fff;padding:0 16px;font-family:inherit;font-size:15px;color:#0A0A0A;box-sizing:border-box;width:100%;border-radius:0}
+.v-desktop .sel{min-height:52px;box-shadow:inset 0 0 0 1.5px #D5D9DF;background:#fff;padding:0 16px;font-size:15px;color:#5F646D;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;font-weight:400;letter-spacing:0;text-transform:none}
+.v-desktop .faq{display:flex;justify-content:space-between;align-items:center;padding:24px 0;border-bottom:1px solid #E3E6EA;font-size:18px;font-weight:700}
+.v-desktop .pl{width:32px;height:32px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #0A0A0A;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;flex:none}
+.v-desktop .arow{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.25);font-size:16px;font-weight:700}
+/* mobile */
+.v-mobile a{color:#1463FF}
+.v-mobile a:hover{color:#0B47C4}
+.v-mobile .s{background:#fff;padding:64px 20px}
+.v-mobile .g{background:#F5F6F8}
+.v-mobile .ey{display:flex;align-items:center;gap:14px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1463FF}
+.v-mobile .ey:before{content:"";width:28px;height:2px;background:currentColor}
+.v-mobile .h2{margin:0;font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-.025em}
+.v-mobile .h4{margin:0;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.v-mobile .lead{margin:0;font-size:19px;line-height:1.6;color:#5F646D}
+.v-mobile .p{margin:0;font-size:16px;line-height:1.65;color:#5F646D}
+.v-mobile .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 30px;border-radius:999px;background:#1463FF;color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;white-space:nowrap;border:0;font-family:inherit}
+.v-mobile .btn.o{background:transparent;color:#0A0A0A;box-shadow:inset 0 0 0 1.5px #0A0A0A}
+.v-mobile .btn.w{background:#fff;color:#0A0A0A}
+.v-mobile .btn.wo{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px #fff}
+.v-mobile .lk{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#0A0A0A;text-decoration:none;display:inline-flex;gap:10px;align-items:center;border-bottom:2px solid #1463FF;padding-bottom:4px;align-self:flex-start}
+.v-mobile .img{background:#D5D9DF;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;color:#5F646D;font-size:12px;font-weight:600;letter-spacing:.04em}
+.v-mobile .hd{display:flex;flex-direction:column;gap:20px;max-width:100%}
+.v-mobile .stars{color:#1463FF;font-size:16px;letter-spacing:3px}
+.v-mobile .ck{display:flex;gap:12px;align-items:center;font-size:15.5px}
+.v-mobile .fld{display:flex;flex-direction:column;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0A0A0A}
+.v-mobile .in{min-height:52px;border:0;box-shadow:inset 0 0 0 1.5px #D5D9DF;background:#fff;padding:0 16px;font-family:inherit;font-size:15px;color:#0A0A0A;box-sizing:border-box;width:100%;border-radius:0}
+.v-mobile .sel{min-height:52px;box-shadow:inset 0 0 0 1.5px #D5D9DF;background:#fff;padding:0 16px;font-size:15px;color:#5F646D;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;font-weight:400;letter-spacing:0;text-transform:none}
+.v-mobile .faq{display:flex;justify-content:space-between;align-items:center;padding:24px 0;border-bottom:1px solid #E3E6EA;font-size:18px;font-weight:700}
+.v-mobile .pl{width:32px;height:32px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #0A0A0A;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;flex:none}
+.v-mobile .arow{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.25);font-size:16px;font-weight:700}
+.v-mobile .btn{white-space:normal;text-align:center}
+</style>
+</head>
+<body>
+<header class="doc-head"><h1>M26 · Testimonials · B</h1><p>Card row + reviews badge (M27) · gray</p></header>
+<div class="doc-label">Desktop · 1440 px</div>
+<section class="doc-frame v-desktop">
+<div style="width:1440px;min-height:613px;background:#fff;font-family:Inter, system-ui, sans-serif;color:#0A0A0A;display:flex;flex-direction:column">
+<div class="s g" style="display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:40px"><div class="hd"><span class="ey">Reviews</span><h2 class="h2">What patients say.</h2></div>
+<div style="display:flex;gap:18px;align-items:center;background:#fff;padding:18px 26px"><span style="font-size:40px;font-weight:800;letter-spacing:-.03em">[4.9]</span><div style="display:flex;flex-direction:column;gap:4px"><span class="stars">★★★★★</span><span style="font-size:13px;color:#5F646D">[2,100] Google reviews</span></div></div></div>
+<div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:24px">
+<div style="background:#fff;padding:36px;display:flex;flex-direction:column;gap:18px;border-top:4px solid #1463FF"><span class="stars">★★★★★</span><p class="p" style="color:#0A0A0A;font-size:17px">[Review text from Google, unedited except for length.]</p><span class="h4" style="font-size:12.5px">[Name] <span style="color:#5F646D;font-weight:600;letter-spacing:0;text-transform:none">· Google</span></span></div>
+<div style="background:#fff;padding:36px;display:flex;flex-direction:column;gap:18px;border-top:4px solid #1463FF"><span class="stars">★★★★★</span><p class="p" style="color:#0A0A0A;font-size:17px">[Review text from Google, unedited except for length.]</p><span class="h4" style="font-size:12.5px">[Name] <span style="color:#5F646D;font-weight:600;letter-spacing:0;text-transform:none">· Google</span></span></div>
+<div class="img" style="background:#1C1F25;color:#9AA0AA;min-height:260px;position:relative">Video testimonial<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#1463FF;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span></div>
+</div>
+</div>
+</div>
+</section>
+<div class="doc-label">Mobile · 390 px</div>
+<section class="doc-frame v-mobile">
+<div style="width:390px;min-height:1045px;background:#fff;font-family:Inter, system-ui, sans-serif;color:#0A0A0A;display:flex;flex-direction:column">
+<div class="s g" style="display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-direction:column;flex-wrap:nowrap"><div class="hd"><span class="ey">Reviews</span><h2 class="h2">What patients say.</h2></div>
+<div style="display:flex;gap:18px;align-items:center;background:#fff;padding:18px 26px"><span style="font-size:28px;font-weight:800;letter-spacing:-.03em">[4.9]</span><div style="display:flex;flex-direction:column;gap:4px"><span class="stars">★★★★★</span><span style="font-size:13px;color:#5F646D">[2,100] Google reviews</span></div></div></div>
+<div style="display:grid;grid-template-columns:minmax(0, 1fr);gap:24px">
+<div style="background:#fff;padding:36px;display:flex;flex-direction:column;gap:18px;border-top:4px solid #1463FF"><span class="stars">★★★★★</span><p class="p" style="color:#0A0A0A;font-size:17px">[Review text from Google, unedited except for length.]</p><span class="h4" style="font-size:12.5px">[Name] <span style="color:#5F646D;font-weight:600;letter-spacing:0;text-transform:none">· Google</span></span></div>
+<div style="background:#fff;padding:36px;display:flex;flex-direction:column;gap:18px;border-top:4px solid #1463FF"><span class="stars">★★★★★</span><p class="p" style="color:#0A0A0A;font-size:17px">[Review text from Google, unedited except for length.]</p><span class="h4" style="font-size:12.5px">[Name] <span style="color:#5F646D;font-weight:600;letter-spacing:0;text-transform:none">· Google</span></span></div>
+<div class="img" style="background:#1C1F25;color:#9AA0AA;min-height:260px;position:relative">Video testimonial<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#1463FF;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span></div>
+</div>
+</div>
+</div>
+</section>
+<div class="doc-end"></div>
+</body>
+</html>
