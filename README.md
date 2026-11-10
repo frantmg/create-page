@@ -5,7 +5,7 @@ Builds conversion-focused landing pages and full websites for healthcare practic
 ## For the team: how to make a page
 
 1. In Claude, start a new chat and type **`/create-page`**, plus a short note. Example:
-   > /create-page Landing page for Redefine Healthcare, knee pain patients in Austin. Logo attached. Their site is redefinehealthcare.com.
+   > /create-page Landing page for Regional Healthcare example, knee pain patients in Austin. Logo attached. Their site is Regionalhealthcareexample.com.
 2. Answer the questions Claude asks (click an option or type your own). About a minute.
 3. Claude writes the content, designs the page, reviews it, and fixes what the review finds. You get:
    - the page itself, shown right in the chat (plus a preview link when available), with a first draft sent while QA runs
