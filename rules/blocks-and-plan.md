@@ -134,7 +134,7 @@ Three priorities rule the content and structure: **simplicity, scanability, and 
 **Conversion recipe** (in this order; bracketed blocks only when the content exists):
 
 1. **LP header:** logo + call button. If Lead flow is "Call first", the call button is the main action in the header and stays reachable (sticky) after the first scroll.
-2. **M01-B hero, above the fold on a phone:** H1 = the offer, in the keyword's words (message match: "Orthopedic Surgeon in Layton", not "Expert care for you"). One line saying who provides it (practice name). 3 bullets with the key facts. Primary CTA (+ call as the second action). Trust signals (rating, years, insurance). On a 390 x 844 phone screen, the H1, the who line and the primary CTA must all show without scrolling.
+2. **M01-B hero, above the fold on a phone:** H1 = the offer, in the keyword's words (message match: "Orthopedic Surgeon in [City]", not "Expert care for you"). One line saying who provides it (practice name). 3 bullets with the key facts. Primary CTA (+ call as the second action). Trust signals (rating, years, insurance). On a 390 x 844 phone screen, the H1, the who line and the primary CTA must all show without scrolling.
 3. **[M22-A doctor video (VSL)]** right after the hero when a video exists: the doctor explains the practice or procedure. Load it on click (poster image first) so the page stays fast.
 4. **Message 1, 2, 3 blocks**, bullets first, short. Use the block-by-message rules in 3.3.
 5. **Proof:** [M23-B before/after] high on the page for aesthetic and surgical specialties (consent and disclosure required), M26-B or M26-A real reviews, [M25] insurance badges.

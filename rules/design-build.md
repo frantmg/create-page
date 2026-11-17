@@ -6,7 +6,7 @@ Owned by page-designer. Design every page as if the `frontend-design` skill is a
 
 ### 5.1 Ground it in the practice
 
-Before designing, name in one line each: the practice's world (specialty, place, patients), the audience, and the page's one job. Distinct choices come from the subject: an orthopedic surgeon in Layton (movement, bone, mountains, athletes) should look nothing like a med spa in Scottsdale (skin, light, ritual) or a behavioral health clinic (calm, safety, plain talk). Use the brand guide, logo, photos and real practice facts throughout. Design decisions (color, type, imagery, shape) come from the brand guidelines first, then the current website; a benchmark site never drives the look.
+Before designing, name in one line each: the practice's world (specialty, place, patients), the audience, and the page's one job. Distinct choices come from the subject: an orthopedic practice in a mountain town (movement, bone, the outdoors, athletes) should look nothing like a med spa in Scottsdale (skin, light, ritual) or a behavioral health clinic (calm, safety, plain talk). Use the brand guide, logo, photos and real practice facts throughout. Design decisions (color, type, imagery, shape) come from the brand guidelines first, then the current website; a benchmark site never drives the look.
 
 ### 5.2 Write a design plan, then review it
 
