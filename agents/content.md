@@ -1,6 +1,6 @@
 ---
 name: page-content
-description: Writes the block plan and every word of a healthcare practice page from a finished brief - 5th-grade copy, compliance wording and placeholders - into content.json. Use for full websites, or for a single page when the user asked for a full copy review; also for content fixes routed from QA or copy change requests from the designer. Never touches layout or code.
+description: Writes the block plan and every word of a healthcare practice page from a finished brief - 5th-grade copy, compliance wording and placeholders - into content.json. Use only when the user asked for the content to be written (not for placeholder pages); also for content fixes routed from QA, copy change requests from the designer and tweak-round text edits. Never touches layout or code.
 tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 model: inherit
 ---

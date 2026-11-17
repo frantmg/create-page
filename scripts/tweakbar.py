@@ -103,12 +103,17 @@ for seed in [s.strip() for s in a.seeds.split(",") if s.strip()]:
     tokens = dict(re.findall(r"(--md-sys-color-[\w-]+):\s*(#[0-9A-Fa-f]{6})", root.group(1))) if root else {}
     if tokens: palettes.append({"name": f"Brand {seed}", "tokens": tokens})
 
+names = {}   # block ID -> plain name from the library table (rules/blocks-and-plan.md 3.1), shown in the Blocks tab
+for line in (KIT / "rules" / "blocks-and-plan.md").read_text(encoding="utf-8").splitlines():
+    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+    if len(cells) >= 2 and re.fullmatch(r"(LP|G\d|M\d{2})(-[A-C])?", cells[0]): names[cells[0]] = cells[1]
+
 m = re.search(r"<title>(.*?)</title>", src, re.S | re.I)
 title = html.unescape(m.group(1).strip()) if m else page.parent.name
 data = {
     "page": src, "page_file": str(page), "page_title": title, "page_hash": hashlib.sha1(page.read_bytes()).hexdigest()[:12],
     "kit_version": (KIT / "VERSION").read_text().strip(), "alternates": alternates,
-    "palettes": palettes, "fonts": fonts, "brand_locked": opts.get("brand_locked", {}),
+    "palettes": palettes, "fonts": fonts, "brand_locked": opts.get("brand_locked", {}), "block_names": names,
 }
 # JSON inside <script>: "</" and "<!--" are escaped so the page's own tags cannot close or comment out the script.
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\u0021--")

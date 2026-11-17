@@ -2,7 +2,7 @@
 
 ## 3. Plan the page: pick the blocks
 
-Owned by the content owner (the orchestrator for a single landing page, otherwise page-content). The result is `content/plan.md`.
+Owned by page-content when the user asked for written content; with placeholder content the orchestrator writes the plan. The result is `content/plan.md`.
 
 ### 3.1 Block library
 

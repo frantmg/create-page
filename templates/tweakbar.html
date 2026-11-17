@@ -66,7 +66,7 @@ h2:first-child { margin-top: 0; }
 .row input[type="color"] { width: 40px; height: 28px; padding: 0; border: 1px solid var(--tw-line); border-radius: 6px; background: none; cursor: pointer; }
 .row output { width: 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--tw-muted); }
 .row input[type="range"] { flex: 1.4; accent-color: var(--tw-accent); }
-.mini { border: 1px solid var(--tw-line); background: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; min-height: 28px; }
+.mini { white-space: nowrap; border: 1px solid var(--tw-line); background: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; min-height: 28px; }
 .mini:disabled { opacity: .35; cursor: default; }
 .btn { border: 0; background: var(--tw-accent); color: var(--tw-accent-ink); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; min-height: 36px; }
 .btn.ghost { background: none; color: var(--tw-ink); border: 1px solid var(--tw-line); }
@@ -82,7 +82,19 @@ textarea { resize: vertical; min-height: 56px; }
 .blk summary { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: pointer; list-style: none; }
 .blk summary::-webkit-details-marker { display: none; }
 .blk summary .id { font-weight: 700; font-size: 12px; background: var(--tw-soft); border-radius: 5px; padding: 2px 6px; flex: none; }
-.blk summary .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tw-muted); }
+.blk summary .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.blk summary .lib, .blk summary .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blk summary .lib { font-size: 12px; font-weight: 600; }
+.blk summary .name { color: var(--tw-muted); font-size: 12px; }
+.thumbs { display: grid; gap: 8px; margin: 4px 0 10px; }
+.thumb { border: 1px solid var(--tw-line); border-radius: 8px; overflow: hidden; background: var(--tw-soft); }
+.thumb.pick { cursor: pointer; }
+.thumb.on { border-color: var(--tw-accent); box-shadow: 0 0 0 1px var(--tw-accent); }
+.thumb-view { position: relative; overflow: hidden; height: 120px; background: #fff; }
+.thumb-view iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.thumb-cap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; font-size: 12px; }
+.thumb-cap b { font-weight: 600; }
+.thumb-cap .in-use { color: var(--tw-accent); font-weight: 600; }
 .blk .body { padding: 2px 10px 10px; }
 .blk .body .row label { flex: 0 0 82px; color: var(--tw-muted); font-size: 12px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tw-accent); flex: none; }
@@ -255,6 +267,8 @@ const isG = e => e.tagName === 'HEADER' || e.tagName === 'FOOTER';
 const BLOCKS = [...BASE_MAP].filter(([, e]) => !isG(e)).map(([key, e]) => ({ key, id: e.getAttribute('data-block'), label: labelOf(e) }));
 const GBLOCKS = [...BASE_MAP].filter(([, e]) => isG(e)).map(([key, e]) => ({ key, id: e.getAttribute('data-block'), label: e.tagName === 'HEADER' ? 'Header' : 'Footer' }));
 const ORIG_ORDER = BLOCKS.map(b => b.key);
+const LIB = DATA.block_names || {};
+const libName = id => LIB[id] || LIB[id.replace(/-[A-C]$/, '')] || '';
 
 const ALTS = {}; let ALT_CSS = '';
 if (DATA.alternates) {
@@ -601,8 +615,10 @@ function blockItem(b, isGBlock) {
   const key = b.key, hidden = state.hidden.includes(key), alts = ALTS[b.id] || [], v = variantOf(key);
   const changed = hidden || v || state.bg[key] || state.notes[key] || state.copy.some(c => c.key === key && c.variant === v);
   const order = curOrder(), i = order.indexOf(key);
+  const shown = v || b.id;
   const sum = el('summary', {}, changed ? el('span', { class: 'dot', title: 'Changed' }) : null,
-    el('span', { class: 'id', text: v || b.id }), el('span', { class: 'name', text: b.label }));
+    el('span', { class: 'id', text: shown }),
+    el('span', { class: 'txt' }, el('span', { class: 'lib', text: libName(shown) || (isGBlock ? b.label : shown) }), el('span', { class: 'name', text: isGBlock ? '' : `“${b.label}”` })));
   const body = el('div', { class: 'body' });
   if (!isGBlock) {
     body.append(el('div', { class: 'row' },
@@ -610,11 +626,13 @@ function blockItem(b, isGBlock) {
       el('button', { class: 'mini', disabled: i === 0, onclick: () => move(key, -1), 'aria-label': `Move ${b.id} up` }, '↑ Up'),
       el('button', { class: 'mini', disabled: i === order.length - 1, onclick: () => move(key, 1), 'aria-label': `Move ${b.id} down` }, '↓ Down'),
       el('button', { class: 'mini', onclick: () => { state.hidden = hidden ? state.hidden.filter(k => k !== key) : [...state.hidden, key]; save(); renderBlocks(); render(); } }, hidden ? 'Show' : 'Hide')));
-    const sel = el('select', { id: 'v-' + key, onchange: e => { if (e.target.value) state.variants[key] = e.target.value; else delete state.variants[key]; save(); renderBlocks(); render(); } },
-      el('option', { value: '', text: `As built (${b.id})` }), alts.map(a => el('option', { value: a.variant, selected: a.variant === v, text: a.label === a.variant ? a.variant : `${a.label} (${a.variant})` })));
-    if (!alts.length) sel.disabled = true;
-    body.append(el('div', { class: 'row' }, el('label', { for: 'v-' + key, text: 'Swap to' }), sel));
-    if (!alts.length) body.append(el('p', { class: 'hint', text: 'No other versions were built for this block. Ask for one in the note.' }));
+    const choose = val => { if (val) state.variants[key] = val; else delete state.variants[key]; save(); renderBlocks(key); render(); };
+    const opts = [{ variant: '', id: b.id, label: 'As built' }, ...alts.map(a => ({ variant: a.variant, id: a.variant, label: a.label === a.variant ? '' : a.label }))];
+    const thumbs = el('div', { class: 'thumbs', 'data-thumbs': key });
+    opts.forEach(o => thumbs.append(thumbCard(key, o, o.variant === v, alts.length ? choose : null)));
+    body.append(el('p', { class: 'hint', text: alts.length ? `Versions of this block (${opts.length}). Click one to use it.` : 'This block. No other versions were built; ask for one in the note.' }), thumbs);
+  } else {
+    body.append(el('div', { class: 'thumbs', 'data-thumbs': key }, thumbCard(key, { variant: '', id: b.id, label: '' }, true, null)));
   }
   const bg = el('select', { id: 'b-' + key, onchange: e => { if (e.target.value) state.bg[key] = e.target.value; else delete state.bg[key]; save(); renderBlocks(); render(); } },
     Object.entries(BG).map(([val, l]) => el('option', { value: val, selected: (state.bg[key] || '') === val, text: l })));
@@ -625,9 +643,50 @@ function blockItem(b, isGBlock) {
     el('textarea', { id: 'n-' + key, oninput: e => { const t = e.target.value; if (t.trim()) state.notes[key] = t; else delete state.notes[key]; save(); } }, state.notes[key] || ''));
   body.append(el('div', { class: 'actions' }, el('button', { class: 'mini', onclick: () => { const e = fdoc() && fdoc().querySelector(`[data-tw-key="${CSS.escape(key)}"]`); if (e) e.scrollIntoView({ behavior: 'instant', block: 'start' }); } }, 'Show in page')));
   const d = el('details', { class: 'blk' + (hidden ? ' hidden-blk' : ''), 'data-key': key }, sum, body);
+  d.addEventListener('toggle', () => { if (d.open) d.querySelectorAll('iframe[data-src-key]').forEach(loadThumb); });
   d.addEventListener('mouseenter', () => focusBlock(key, true));
   d.addEventListener('mouseleave', () => focusBlock(key, false));
   return d;
+}
+/* Mini previews: the block alone, in the page's current styles, scaled down to the panel width */
+const THUMB_W = 1024, THUMB_MAX = 280;
+function previewHtml(key, variant) {
+  const doc = parse();
+  const add = (tag, props) => { const e = doc.createElement(tag); Object.assign(e, props); doc.head.appendChild(e); return e; };
+  if (state.fonts && state.fonts.href) add('link', { rel: 'stylesheet', href: state.fonts.href });
+  if (ALT_CSS) add('style', { textContent: ALT_CSS });
+  add('style', { textContent: TW_CSS });
+  add('style', { textContent: tokenCss() });
+  add('style', { textContent: 'html,body{margin:0!important;overflow:hidden!important}.site-header{position:static!important}' });
+  doc.querySelectorAll('script').forEach(s => s.remove());
+  const map = keyed(doc); let e = map.get(key); if (!e) return '';
+  const alt = variant && (ALTS[e.getAttribute('data-block')] || []).find(a => a.variant === variant);
+  if (alt) { const t = doc.createElement('template'); t.innerHTML = alt.html; const nu = t.content.firstElementChild; if (nu) { nu.setAttribute('data-tw-key', key); nu.setAttribute('data-tw-variant', variant); e = nu; } }
+  if (state.bg[key]) e.setAttribute('data-tw-bg', state.bg[key]);
+  state.copy.forEach(c => { if (c.key === key && c.variant === (variant || '')) { const n = byPath(e, c.path); if (n) n.innerHTML = c.afterHtml; } });
+  if (isG(e)) doc.body.replaceChildren(e); else { const m = doc.createElement('main'); m.append(e); doc.body.replaceChildren(m); }
+  return '<!doctype html>\n' + doc.documentElement.outerHTML;
+}
+function thumbCard(key, o, on, choose) {
+  const f = el('iframe', { tabindex: '-1', 'aria-hidden': 'true', title: '' });
+  f.dataset.srcKey = key; f.dataset.variant = o.variant; f.style.width = THUMB_W + 'px';
+  const name = libName(o.id);
+  const cap = el('div', { class: 'thumb-cap' },
+    el('span', {}, el('b', { text: o.id }), ' ', [o.label, name].filter(Boolean).join(' · ')),
+    choose ? (on ? el('span', { class: 'in-use', text: 'In use' }) : el('button', { class: 'mini', onclick: ev => { ev.stopPropagation(); choose(o.variant); } }, 'Use this')) : null);
+  const card = el('div', { class: 'thumb' + (on && choose ? ' on' : '') + (choose && !on ? ' pick' : '') }, el('div', { class: 'thumb-view' }, f), cap);
+  if (choose && !on) card.addEventListener('click', () => choose(o.variant));
+  return card;
+}
+function loadThumb(f) {
+  if (f.dataset.loaded) return; f.dataset.loaded = '1';
+  f.addEventListener('load', () => {
+    const view = f.parentElement, scale = (view.clientWidth || 300) / THUMB_W;
+    const h = Math.max(f.contentDocument.documentElement.scrollHeight, f.contentDocument.body.scrollHeight);
+    f.style.height = h + 'px'; f.style.transform = `scale(${scale})`;
+    view.style.height = Math.min(Math.ceil(h * scale), THUMB_MAX) + 'px';
+  });
+  f.srcdoc = previewHtml(f.dataset.srcKey, f.dataset.variant);
 }
 function move(key, dir) {
   const o = curOrder(), i = o.indexOf(key), j = i + dir; if (j < 0 || j >= o.length) return;

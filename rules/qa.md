@@ -2,7 +2,7 @@
 
 ## 6. QA and review
 
-page-qa runs all of this; page-designer runs 6.1 on its own build and the content owner runs `readability.py` on `content.json` before handing off. Never report a check as done unless it was actually run.
+page-qa runs all of this; page-designer runs 6.1 on its own build and page-content runs `readability.py` on `content.json` before handing off. Never report a check as done unless it was actually run.
 
 **qa.py runs once per stage.** While building or fixing, the designer checks with `--fast` (390 and 1440px only). The last thing the designer does in a stage is one full run (all five widths) saved with `--out <work>/qa/auto.json`. page-qa uses that file as the automated results when its `run` is `full` and its `page_hash` matches the page; it runs qa.py itself (full, with `--out`) only when the file is missing, was a fast run, or the page has changed since.
 
@@ -14,6 +14,8 @@ axe-core ships with the kit at `scripts/vendor/axe.min.js`, so there is nothing 
 2. Run `python3 <kit>/scripts/readability.py <work>/index.html`. The copy is in the HTML itself, so it grades the page directly.
 
 ### 6.2 Review areas
+
+On a placeholder page (`Content: placeholder` in the brief, `rules/copy.md` 4.2), skip area A and the area B wording checks and list them under "Not checked"; still check that the real words 4.2 requires are present (CTA labels, legal links, form labels and note, alt text) and that no stats, ratings or reviews were invented.
 
 Look at every screenshot (desktop, 390px, phone first screen) and read the source. Then check each area:
 
@@ -92,4 +94,4 @@ Not checked: <anything that could not run, and why>
 
 **Re-review:** only blocker findings trigger a new page-qa run. When a round has blockers, the re-review checks the blockers and the judgment majors from that round. Mechanical and minor findings, and the majors of a round with no blockers, are fixed by their owner, verified by the owner's checks, and reported at delivery as fixed without re-review.
 
-The Area column lets the orchestrator route each finding to its owner (0.6): A and B wording to the content owner (the orchestrator for a single landing page, otherwise page-content), C, D, E and B build issues to page-designer.
+The Area column lets the orchestrator route each finding to its owner (0.6): A and B wording to page-content, C, D, E and B build issues to page-designer.

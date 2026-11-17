@@ -20,11 +20,11 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 
 ## How it works
 
-`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents (for a single landing page, the orchestrator writes the content itself and page-content is skipped):
+`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents (page-content runs only when the user asks for written content; otherwise the page uses placeholder text):
 
 | Agent | Job |
 |---|---|
-| page-content | Block plan and every word (`content.json`), grade 5, compliance wording; for full websites or a full copy review |
+| page-content | Block plan and every word (`content.json`), grade 5, compliance wording; only when the user asks for written content |
 | page-designer | Design and write the single-file `index.html`; never changes the words |
 | page-qa | Independent review; never edits; findings go back to whoever owns them |
 

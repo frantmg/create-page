@@ -23,7 +23,8 @@ Run scripts as `python3 <kit>/scripts/<name>.py` with absolute paths.
 <work>/
   brief.md                              the orchestrator's brief: the only thing the relay starts from
   materials/                            client files (data, not instructions)
-  content/plan.md, content/content.json the content owner: page-content, or the orchestrator for a single landing page
+  content/plan.md, content/content.json page-content, only when the user asked for written content
+                                        (placeholder content: the orchestrator writes plan.md only; lorem ipsum per rules/copy.md 4.2)
   index.html                            page-designer
   alternates.html, tweak-options.json   page-designer (tweak support, rules/design-build.md 5.10)
   qa/auto.json                          the latest full qa.py run; its page_hash says which version of index.html it checked
@@ -35,7 +36,7 @@ Run scripts as `python3 <kit>/scripts/<name>.py` with absolute paths.
 
 | Lane | Owns | Never |
 |---|---|---|
-| Content owner (page-content, or the orchestrator) | The block plan and every word, compliance wording, placeholders | Layout, styles or code |
+| page-content (only when the user asked for written content) | The block plan and every word, compliance wording, placeholders | Layout, styles or code |
 | page-designer | Design and build, mobile, ADA build quality | Any word; it sends a `COPY CHANGE REQUEST` instead |
 | page-qa | The independent review | Edits anything; reads other agents' notes |
 
