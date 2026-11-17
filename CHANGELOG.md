@@ -2,11 +2,7 @@
 
 Newest first. Versions follow the rules in START-HERE.md section 9.
 
-- **6.6.1** (2026-11-17): The intake always asks for the brand guide as its own option (with logo, compliance rules and the current website), even when a website is given.
-- **6.6.0** (2026-11-17): Faster loop: one-screen intake with defaults (quick draft, no plan approval), the tweak page right after the build with QA and block versions in the background, one-click Send to Claude, and tweaks applied by script in seconds.
-- **6.5.0** (2026-11-17): Tweak bar: replace any block with another from the library, or add a library block, picked from previews; the designer builds it in the page's style.
-- **6.4.0** (2026-11-17): Content is written by the page-content agent only when the user asks for it; otherwise the page uses placeholder text (lorem ipsum) and skips the content stage. The tweak bar's Blocks tab shows a live preview of each block and its other versions, with plain block names.
-- **6.3.0** (2026-11-17): Faster runs: stage timing, lighter blocks, split instructions, edit-only fixes, fewer QA runs.
+- **6.2.1** (2026-11-17): Back to the 6.2.0 kit with only the tweak bar improvements kept: live block previews, replace or add a block from the library, one-click Send to Claude, and tweaks applied by script in seconds (the designer only builds new blocks, notes and contrast fixes).
 - **6.2.0** (2026-11-17): New tweak round: after the design is done, the user fine-tunes it in a tweak page (colours, fonts, sizes, shape, block order, block versions, backgrounds, text, notes) and the changes go back through the relay.
 - **6.1.1** (2026-11-09): Block descriptions now describe the layout only; references to outside sites removed.
 - **6.1.0** (2026-11-09): Plan approval now shows a wireframe built from the library blocks.

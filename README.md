@@ -9,7 +9,7 @@ Builds conversion-focused landing pages and full websites for healthcare practic
 2. Answer the questions Claude asks (click an option or type your own). About a minute.
 3. Claude writes the content, designs the page, reviews it, and fixes what the review finds. You get:
    - the page itself, shown right in the chat (plus a preview link when available), with a first draft sent while QA runs
-   - a tweak page to finish the design yourself, shown as soon as the page is built: try palettes, fonts, sizes, corners and shadows, move, hide, swap, replace or add blocks, edit text and leave notes, then press Send to Claude
+   - a tweak page to finish the design yourself: try palettes, fonts, sizes, corners and shadows, move, hide, swap, replace or add blocks (with live previews), edit text and leave notes, then press Send to Claude
    - the QA report
    - the list of `[placeholders]` the practice still needs to fill
    - for landing pages: the pre-launch compliance checklist and matching ad headlines
@@ -20,11 +20,11 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 
 ## How it works
 
-`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents (page-content runs only when the user asks for written content; otherwise the page uses placeholder text):
+`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents:
 
 | Agent | Job |
 |---|---|
-| page-content | Block plan and every word (`content.json`), grade 5, compliance wording; only when the user asks for written content |
+| page-content | Block plan and every word (`content.json`), grade 5, compliance wording |
 | page-designer | Design and write the single-file `index.html`; never changes the words |
 | page-qa | Independent review; never edits; findings go back to whoever owns them |
 
@@ -34,10 +34,9 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 |---|---|
 | `START-HERE.md` | The orchestrator: intake questions, the relay, delivery, versioning |
 | `rules/` | Materials, block plan, copy, design and build, QA standards |
-| `agents/` | The three agent roles with their full instructions, plus `shared.md` read by all of them (roles also in `.claude/agents/` for Claude Code) |
-| `blocks-lite/` | Each block as plain structure and content slots (about 1 to 2 KB); what the agents read |
-| `blocks/` | The original block demo files (visual reference and wireframes) |
-| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`, `tweakserve.py`, `apply_tweaks.py`), stage timing (`timing.py`), lite block builder (`blocks_lite.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
+| `agents/` | The three agent roles (also in `.claude/agents/` for Claude Code) |
+| `blocks/` | The 47 original block HTML files (structure reference) |
+| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`, `tweakserve.py`, `apply_tweaks.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
 | `templates/page.html` | Starter single-file page: design tokens, skip link, focus styles, small accessible JS |
 | `templates/tweakbar.html` | The tweak bar used by `scripts/tweakbar.py` for the tweak round |
 | `VERSION`, `CHANGELOG.md` | Current version and history |

@@ -123,14 +123,14 @@ Semantic HTML and the page's inline CSS do layout, spacing, type and color. Inte
 
 ### 5.8 Stack and build
 
-Every page is **one hand-written HTML file**: semantic HTML plus one inline `<style>` and, only where a block needs it, a small inline `<script>`. It is built from the blocks in `blocks-lite/` (structure and content slots) and starts from `templates/page.html`. There are no build tools, installs or frameworks: the file you write is the file that is delivered.
+Every page is **one hand-written HTML file**: semantic HTML plus one inline `<style>` and, only where a block needs it, a small inline `<script>`. It is built from the blocks in `blocks/` (structure and content slots) and starts from `templates/page.html`. There are no build tools, installs or frameworks: the file you write is the file that is delivered.
 
 Structure:
 
 ```
 <work>/
   brief.md
-  content/plan.md, content/content.json   # from page-content (placeholder pages: plan.md only); the designer never edits them
+  content/plan.md, content/content.json   # from page-content; the designer never edits them
   index.html                              # the page: tokens, block styles, markup, small JS
   alternates.html, tweak-options.json     # tweak support (5.10); never linked from index.html
   tweak.html                              # made by scripts/tweakbar.py for the tweak round; never delivered
@@ -153,7 +153,7 @@ Responsive from 360px up, visible keyboard focus, `prefers-reduced-motion` respe
 
 ### 5.10 Tweak support and applying tweaks
 
-The user finishes the design in the tweak round (START-HERE.md 0.7) with `scripts/tweakbar.py`, which wraps `index.html` in a live preview with a tweak bar. The bar reads the token block, so everything in 5.8's "one token source" rule is what makes it work. The designer adds two files next to `index.html` in a separate request right after the build, while the user is already looking at the page (never touching `index.html` in that request):
+The user finishes the design in the tweak round (START-HERE.md 0.7) with `scripts/tweakbar.py`, which wraps `index.html` in a live preview with a tweak bar. The bar reads the token block, so everything in 5.8's "one token source" rule is what makes it work. The designer adds two files next to `index.html` with the build:
 
 **`<work>/alternates.html`: other versions of the planned blocks.** For each planned block that has library variants (M01, M02, M03, M05, M08, M11, M22, M23, M26, M28: A, B and C), build the other variants, at most 2 per block, held to the same standard as the page: the page's tokens, art direction, mobile and ADA rules, and the words from `content.json` exactly. Leave out a slot the content has no words for rather than writing new copy; page-content fills it if the user picks that version. Format:
 
@@ -183,11 +183,11 @@ The user finishes the design in the tweak round (START-HERE.md 0.7) with `script
 - **Palettes (2 or 3):** each holds the full `:root` colour roles from `scripts/m3_scheme.py`, from another variant of the brand colour (`--variant tonal_spot`, `vibrant`, `content`) or from a second brand or logo colour. When the brief or brand guide fixes the colours, offer only variants of the brand colour and set `brand_locked.colors` to true.
 - **Font pairings (2 or 3):** Google Fonts with `display=swap`, each following 5.5 and avoiding the 5.3 clichés. When the brief names brand fonts, set `brand_locked.fonts` to true and offer pairings only if the brand guide allows a second face; otherwise leave `fonts` empty.
 
-**Applying a `tweaks.json`:** `scripts/apply_tweaks.py` does the mechanical part in seconds: tokens and palettes (a seed palette recomputed with `m3_scheme.py`), scales written as real token values, fonts, page width, button shape, block order, hidden blocks with their CSS, block versions (markup and `<style data-variant>` CSS, the old block kept in `alternates.html`), backgrounds (`band-plain`, `band-tint-low`, `band-tint`, `band-brand`, `band-dark` on the token pairs) and text edits. The designer gets only its `needs_designer` and `cleanup` lists:
+**Applying a `tweaks.json`:** `scripts/apply_tweaks.py` does the mechanical part in seconds: tokens and palettes (a seed palette recomputed with `m3_scheme.py`), scales written as real token values, fonts, page width, button shape, block order, hidden blocks with their CSS, block versions (markup and `<style data-variant>` CSS, the old block kept in `alternates.html`), backgrounds (`band-plain`, `band-tint-low`, `band-tint`, `band-brand`, `band-dark` on the token pairs) and the `final` text edits from page-content. The designer gets only its `needs_designer` and `cleanup` lists:
 
-- `blocks.replacements` and `blocks.added`: build each new block from `blocks-lite/` in the page's style, at the place `plan.md` gives (a replacement takes the old block's section, and its CSS is removed), with the words from `content.json` (or lorem ipsum on a placeholder page), to the same standard as the first build and with block CSS markers. Use `blocks/` only to see the layout the user picked.
+- `blocks.replacements` and `blocks.added`: build each new block from `blocks/` in the page's style, at the place `plan.md` gives (a replacement takes the old block's section, and its CSS is removed), with the words from `content.json`, to the same standard as the first build and with block CSS markers.
 - Contrast failures: keep the user's choice as close as possible and adjust the failing role's tone until it passes; say what changed. Check the blocks whose background changed for AA contrast inside (buttons, links, captions).
-- Notes: do what they ask when it is design; send anything about words back as a copy change request.
+- Notes: do what they ask when it is design; send anything about words to page-content as a copy change request.
 - Cleanup: CSS left behind where a block had no markers; remove it (or move it into `alternates.html` as that version's `<style data-variant>`).
 
 Then refresh `alternates.html` and `tweak-options.json` for any block or setting that changed, so the next tweak page has choices again, and rerun 6.1. Never copy tweak bar code or `data-tw-` attributes into `index.html` (qa.py `tweak_leftovers`).

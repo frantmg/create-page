@@ -4,18 +4,14 @@
 
 page-qa runs all of this; page-designer runs 6.1 on its own build and page-content runs `readability.py` on `content.json` before handing off. Never report a check as done unless it was actually run.
 
-**qa.py runs once per stage.** While building or fixing, the designer checks with `--fast` (390 and 1440px only). The last thing the designer does in a stage is one full run (all five widths) saved with `--out <work>/qa/auto.json`. page-qa uses that file as the automated results when its `run` is `full` and its `page_hash` matches the page; it runs qa.py itself (full, with `--out`) only when the file is missing, was a fast run, or the page has changed since.
-
 ### 6.1 Automated checks
 
 axe-core ships with the kit at `scripts/vendor/axe.min.js`, so there is nothing to install for it. Playwright is usually installed; if not: `pip install --break-system-packages playwright && python3 -m playwright install chromium`.
 
-1. Run `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --brand-fonts "<brand fonts from the brief>" --out <work>/qa/auto.json` (leave `--brand-fonts` out when the brief names none; add `--fast` only for self-checks while working). It checks 320, 390, 768, 1024 and 1440px for overflow, small tap targets and small input text; runs axe-core for WCAG 2.2 A/AA; tabs through the page for focus order and visible focus; checks the logo in the header and the footer at 390 and 1440px (an `img`, `svg` or `.wordmark` that is visible, at least 24px tall and has 3:1 contrast against its background); reports loaded fonts, the phone first screen (H1 and actions), CTA labels, em dashes, block IDs and the file size; checks alignment at 390 and 1440px (edge near-misses 1 to 12px apart, content overlapping content in another section, rows wider than their text column, and at 1440px items in one row whose tops differ by more than 2px) and style (uppercase on buttons, `a.btn` and nav links, main fonts from the 5.3 cliché list unless passed with `--brand-fonts`); reports `tweak_leftovers` (tweak bar code that must never be in the page); saves screenshots at 390 and 1440px (plus the 390 x 844 phone first screen).
+1. Run `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --brand-fonts "<brand fonts from the brief>"` (leave `--brand-fonts` out when the brief names none). It checks 320, 390, 768, 1024 and 1440px for overflow, small tap targets and small input text; runs axe-core for WCAG 2.2 A/AA; tabs through the page for focus order and visible focus; checks the logo in the header and the footer at 390 and 1440px (an `img`, `svg` or `.wordmark` that is visible, at least 24px tall and has 3:1 contrast against its background); reports loaded fonts, the phone first screen (H1 and actions), CTA labels, em dashes, block IDs and the file size; checks alignment at 390 and 1440px (edge near-misses 1 to 12px apart, content overlapping content in another section, rows wider than their text column, and at 1440px items in one row whose tops differ by more than 2px) and style (uppercase on buttons, `a.btn` and nav links, main fonts from the 5.3 cliché list unless passed with `--brand-fonts`); reports `tweak_leftovers` (tweak bar code that must never be in the page); saves screenshots at 390 and 1440px (plus the 390 x 844 phone first screen).
 2. Run `python3 <kit>/scripts/readability.py <work>/index.html`. The copy is in the HTML itself, so it grades the page directly.
 
 ### 6.2 Review areas
-
-On a placeholder page (`Content: placeholder` in the brief, `rules/copy.md` 4.2), skip area A and the area B wording checks and list them under "Not checked"; still check that the real words 4.2 requires are present (CTA labels, legal links, form labels and note, alt text) and that no stats, ratings or reviews were invented.
 
 Look at every screenshot (desktop, 390px, phone first screen) and read the source. Then check each area:
 
@@ -72,18 +68,13 @@ Verdict: PASS | FAIL        Round: <n>
 Summary: <2 sentences>
 
 Findings
-| ID | Severity | Type | Area | Block | Problem | Evidence | Fix |
-|----|----------|------|------|-------|---------|----------|-----|
-| Q1 | blocker  | judgment | B | M26-B | ...   | ...      | ... |
+| ID | Severity | Area | Block | Problem | Evidence | Fix |
+|----|----------|------|-------|---------|----------|-----|
+| Q1 | blocker  | B    | M26-B | ...     | ...      | ... |
 
-Automated results: <reused <work>/qa/auto.json (page_hash ...) / ran qa.py myself, and why>
 Passed: <areas or checks that passed>
 Not checked: <anything that could not run, and why>
 ```
-
-**Type**
-- **mechanical:** a fix the designer can make and verify with qa.py, with no design judgment: contrast values (a token's tone), missing alt text, uppercase on labels, buttons or nav, tap target size. These are fixed without a re-review, whatever their severity.
-- **judgment:** everything else.
 
 **Severity**
 - **Blocker:** compliance or legal risk (invented facts, guarantees, missing required disclaimer, PHI risk), axe critical or serious, keyboard trap, page broken or overflowing at any width, H1 or CTA missing from the phone first screen in conversion mode, reading grade over 5.9.
@@ -91,7 +82,5 @@ Not checked: <anything that could not run, and why>
 - **Minor:** polish (wraps, spacing, small inconsistencies, optional refinements).
 
 **Verdict:** FAIL if there is any blocker or major finding; otherwise PASS (minors listed for the record).
-
-**Re-review:** only blocker findings trigger a new page-qa run. When a round has blockers, the re-review checks the blockers and the judgment majors from that round. Mechanical and minor findings, and the majors of a round with no blockers, are fixed by their owner, verified by the owner's checks, and reported at delivery as fixed without re-review.
 
 The Area column lets the orchestrator route each finding to its owner (0.6): A and B wording to page-content, C, D, E and B build issues to page-designer.

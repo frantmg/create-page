@@ -52,7 +52,7 @@ if a.file.endswith((".html",".htm")):
     p=P(); p.feed(src)
     names=(["(page)"] if "(page)" in p.chunks else [])+p.order
     blocks=[(b,"".join(p.chunks[b])) for b in names]
-elif a.file.endswith(".json"):   # content.json from the content owner: grade each block's slots
+elif a.file.endswith(".json"):   # content.json from page-content: grade each block's slots
     import json; d=json.loads(src)
     blocks=[(b.get("id","?"),"\n".join(strings(b.get("slots",{})))) for b in d.get("blocks",[])]
 else: blocks=[("(text)",src)]
