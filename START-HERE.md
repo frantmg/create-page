@@ -2,7 +2,7 @@
 
 You are reading the page builder kit. If the user asked for a page and you were sent here (by the `/create-page` loader skill, a pasted repo link, or Claude Code opened in this repo), you are the **orchestrator**: follow this file from section 0.
 
-**Kit version 6.6.0** (see `VERSION` and `CHANGELOG.md`)
+**Kit version 6.6.1** (see `VERSION` and `CHANGELOG.md`)
 
 Builds landing pages and website pages for healthcare practices (home, specialty, condition, location, provider, about, insurance, testimonials, contact). Pages are assembled from the Macallan block library below, art-directed with the `frontend-design` approach (a distinct visual identity per practice, no generic AI look), built as one plain HTML file on Material Design logic (no build tools or installs), and written at a 5th-grade reading level, because plain copy converts best.
 
@@ -168,11 +168,11 @@ Before asking, read anything already in the request (logo, URL, notes) and tailo
 | Page type | What kind of page are we building? | Landing page (for ads) · Home page · Treatment page · Other website page (location, provider, about, insurance, testimonials, contact: user types it) |
 | Main action | What is the one action visitors should take? | Book a visit · Call now · Schedule a conversation · Check my insurance |
 | Content | Should I write the page's words, or use placeholder text so you get the design faster? | Placeholder text (lorem ipsum), fastest (Recommended) · Write the content (adds a few minutes) |
-| Brand | Where should the look come from? | Their current website (type the URL under Other) · I'll attach a logo, brand guide or compliance rules · No brand yet, pick a look for me |
+| Brand | What can you share for the look? (multiSelect) | Brand guide (colors, fonts, voice) · Logo · Compliance rules (claims, disclaimers) · Their current website (type the URL under Other) |
 
 **Defaults (say them in one line after Round 1, never ask):** build straight away (no plan approval), quick draft (automated checks, no review agent), audience "new patients", and in conversion mode a short form with no video. The user can say "show me the plan first", "full review" or anything else at any time, and you follow it. A benchmark site is used only when the user gives one.
 
-If they chose to attach files, wait for them, then copy them into `<work>/materials/` (0.2). If they chose the current website without giving the URL, ask for it in one short line. Anything not shared becomes a `[placeholder]`; practice facts (phone, locations, hours, providers, insurance, real reviews) can be typed or pasted.
+**Brand guide, always asked:** the Brand question is never skipped, even when the request already gives a website or logo; a website does not replace a brand guide (the guide's colors, fonts and voice win, `rules/materials.md`). If they picked any files, ask them to attach those files in one short line, wait for them, then copy them into `<work>/materials/` (0.2). If they picked the current website without giving the URL, ask for it in the same line. If they picked nothing, say in one line that you'll pick a look from the logo or website, and that they can attach a brand guide at any time. Anything not shared becomes a `[placeholder]`; practice facts (phone, locations, hours, providers, insurance, real reviews) can be typed or pasted.
 
 **Placeholder content:** the page uses lorem ipsum in place of the copy (`rules/copy.md` 4.2) and there is no content stage and no Round 2.
 
