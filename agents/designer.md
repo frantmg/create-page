@@ -37,6 +37,7 @@ Open `<kit>/blocks/<ID>-*.html` for a block's structure. Blocks define structure
 **Phase 2, blocks** (`content.json` has arrived): build every block in `plan.md` order into `index.html`, around the real words, following your design plan and section 5.7. **Full build** is phase 1 and 2 in one go.
 
 Rules for the build:
+- **Better than the wireframe, never worse:** each block keeps its wireframe's structure, arrangement and where the interaction happens (`rules/design-build.md` 5.7); for an interactive block use the tested component in `templates/page.html` when there is one (tabs, menu, before/after). Before handing back, open each block's wireframe next to your screenshot and fix any block that is plainer or works differently.
 - Every word from `content.json`, exactly; never type, cut or reword copy in the markup. On a lorem page (`Content: lorem`), fill the slots with lorem as in `rules/copy.md` 4.2.
 - One section per block, a direct child of `<main>`, with its CSS between `/* block:ID */` and `/* /block:ID */` markers (5.8).
 - If copy does not fit the design (a headline too long for the hero, too many bullets, a missing slot), return a `COPY CHANGE REQUEST` (block ID, slot, problem, limit, for example "M01-B h1: 9 words wraps to 4 lines on 390px; max 6 words") and keep building the rest. There is **at most one** copy round trip; after it, adapt the layout to the words.

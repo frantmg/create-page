@@ -165,6 +165,32 @@ input, select, textarea, button { font: inherit; font-size: max(16px, 1em); }
 [role="tab"] { min-height: 48px; padding: 0 var(--space-3); border: 0; border-bottom: 3px solid transparent; background: none; color: inherit; cursor: pointer; }
 [role="tab"][aria-selected="true"] { border-color: var(--md-sys-color-primary); color: var(--md-sys-color-primary); }
 
+/* ── Before/after compare (M23-B): the divider and handle sit ON the image ──
+   Drag anywhere on the photo, or Tab to it and use the arrow keys: a native range input covers the photo (invisible),
+   so pointer, touch and keyboard all work and screen readers announce it. Labels stay pinned in the corners.
+   Markup (delete this group and the script if the page has no M23-B):
+   <div class="compare">
+     <div class="before"><img src="[before.webp]" alt="Before: [condition], [when]"></div>
+     <div class="after"><img src="[after.webp]" alt="After: [condition], [when]"></div>
+     <span class="tag tag-before" aria-hidden="true">Before</span><span class="tag tag-after" aria-hidden="true">After</span>
+     <span class="divider" aria-hidden="true"><span class="handle">‹ ›</span></span>
+     <input type="range" min="0" max="100" value="50" aria-label="Compare before and after photos">
+   </div>
+   No photos yet: use <div class="before ph">Before photo, 4:3</div> and <div class="after ph">After photo, 4:3</div>. */
+.compare { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-m); --pos: 50%; user-select: none; }
+.compare > .before, .compare > .after { position: absolute; inset: 0; margin: 0; }
+.compare > .after { clip-path: inset(0 0 0 var(--pos)); }
+.compare img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.compare .ph { display: flex; align-items: flex-end; padding: var(--space-3); font-size: var(--text-caption); color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container-high); }
+.compare > .after.ph { justify-content: flex-end; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.compare .tag { position: absolute; top: var(--space-2); z-index: 2; padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); background: rgb(var(--ink) / 0.72); color: #fff; font-size: var(--text-caption); font-weight: 600; pointer-events: none; }
+.compare .tag-before { left: var(--space-2); }
+.compare .tag-after { right: var(--space-2); }
+.compare .divider { position: absolute; top: 0; bottom: 0; left: var(--pos); z-index: 2; width: 3px; margin-left: -1.5px; background: var(--md-sys-color-surface); pointer-events: none; }
+.compare .handle { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 700; letter-spacing: 0.1em; box-shadow: var(--shadow-raised); }
+.compare input[type="range"] { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
+.compare:has(input:focus-visible) .handle { outline: var(--focus-ring); outline-offset: 3px; }
+
 /* Grain for gradient moments: add class="grain" to a brand gradient field */
 .grain { position: relative; isolation: isolate; }
 .grain::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .12; pointer-events: none; mix-blend-mode: overlay;
@@ -229,6 +255,12 @@ input, select, textarea, button { font: inherit; font-size: max(16px, 1em); }
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('is-open')) { set(false); toggle.focus(); } });
     nav.addEventListener('click', e => { if (e.target.closest('a')) set(false); });
   }
+  // Before/after compare (M23-B): the range input drives --pos; the value is announced as text.
+  document.querySelectorAll('.compare input[type="range"]').forEach(r => {
+    const box = r.closest('.compare');
+    const set = () => { box.style.setProperty('--pos', r.value + '%'); r.setAttribute('aria-valuetext', `${r.value}% before, ${100 - r.value}% after`); };
+    r.addEventListener('input', set); set();
+  });
   // Tabs (M13): role=tablist > role=tab[aria-controls]; arrow keys, Home and End move between tabs.
   document.querySelectorAll('[role="tablist"]').forEach(list => {
     const tabs = [...list.querySelectorAll('[role="tab"]')];

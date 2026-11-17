@@ -102,6 +102,8 @@ Put the chosen scale in the page's token block as CSS custom properties (for exa
 
 Semantic HTML and the page's inline CSS do layout, spacing, type and color. Interactive parts use native elements first and small vanilla JS only when needed, restyled with the tokens so nothing looks like a stock widget.
 
+**Wireframe parity: every block must look better than its wireframe, never worse.** The wireframe (`blocks/<ID>-*.html`, what the user approved in the block review) sets the block's structure, the arrangement of its parts and **where the interaction happens** (a handle on the image, hotspots on a figure, tabs beside their panel). Keep all of that; the art direction goes on top. Never swap an interaction for a generic browser control somewhere else (for example a slider bar under a before/after photo). Before handing off, compare each built block with its wireframe side by side.
+
 **Blocks define structure and content slots only.** Never copy a block's `<style>`, class styles or inline styles into the page. Restyle every block from the page's token block. In particular, no `text-transform: uppercase` on buttons, headings or nav; uppercase is allowed only on eyebrows and short labels, and only if the brand uses it.
 
 | Block | Treatment |
@@ -116,7 +118,11 @@ Semantic HTML and the page's inline CSS do layout, spacing, type and color. Inte
 | FAQ (M31) | Native `<details>` and `<summary>` (keyboard accessible with no JS), no shadow, large question type, rules between items |
 | Forms (M29, M30) | Native `<input>`, `<select>` and `<label>` styled with the tokens (custom radius, focus color, label style). Multi-step form: one `<fieldset>` per step with a progress bar and a few lines of JS. Quiz: large tappable option cards built on radio inputs |
 | Video (M22) | Poster image with a play `<button>`; a native `<dialog>` opens the player, which loads only on click |
-| Carousel and gallery (M23, M24) | CSS scroll-snap with previous and next buttons; no carousel library |
+| Photo mosaic (M23-A) | An asymmetric grid on the column lines: one large photo with smaller ones beside it, short labels on the photos, the "+ N photos" tile as a link; not a carousel |
+| Before/after (M23-B) | The comparison is **on the photo**: a full-height divider with a round handle centred on it, the before photo on the left and the after photo revealed on the right, "Before" and "After" labels pinned in the top corners (never inside the moving layer, so they are not clipped). Drag anywhere on the photo; keyboard and screen readers work through the invisible native range input covering it. Use the tested `.compare` component in `templates/page.html` and restyle it with the tokens. Text column beside it on desktop (condition and treatment, the "Results vary" consent line), below it on mobile. Never a separate slider bar under the photo |
+| Body map (M17) | The figure stays: each area is a real `<button>` placed on the illustration (percent positions on the grid of the figure), `aria-pressed` on the chosen one, and the condition list beside it updates to that area; the same buttons work on mobile with the list below. Never replace the figure with a plain list |
+| Finder bar (M33) | One row on desktop (stacked on mobile) of native selects styled with the tokens and the main button, set as a single bar on its own field so it reads as one tool, as in the wireframe |
+| Carousel (M24) | CSS scroll-snap with previous and next buttons; no carousel library |
 | Header and mobile bar (G1, G2, LP) | Thin custom header; the mobile menu script from `templates/page.html` (`aria-expanded`, Escape closes); sticky call/book bar on mobile |
 | Insurance strip (M25) | Logos in one tonal color, set on a quiet band, not boxed |
 | Icons | Inline SVG with `aria-hidden="true"` (or a label when it carries meaning), used sparingly |
