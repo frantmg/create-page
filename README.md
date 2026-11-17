@@ -9,6 +9,7 @@ Builds conversion-focused landing pages and full websites for healthcare practic
 2. Answer the questions Claude asks (click an option or type your own). About a minute.
 3. Claude writes the content, designs the page, reviews it, and fixes what the review finds. You get:
    - the page itself, shown right in the chat (plus a preview link when available), with a first draft sent while QA runs
+   - a tweak page to finish the design yourself: try palettes, fonts, sizes, corners and shadows, move, hide or swap blocks, edit text and leave notes, then copy your changes back to Claude
    - the QA report
    - the list of `[placeholders]` the practice still needs to fill
    - for landing pages: the pre-launch compliance checklist and matching ad headlines
@@ -35,8 +36,9 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 | `rules/` | Materials, block plan, copy, design and build, QA standards |
 | `agents/` | The three agent roles (also in `.claude/agents/` for Claude Code) |
 | `blocks/` | The 47 original block HTML files (structure reference) |
-| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
+| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
 | `templates/page.html` | Starter single-file page: design tokens, skip link, focus styles, small accessible JS |
+| `templates/tweakbar.html` | The tweak bar used by `scripts/tweakbar.py` for the tweak round |
 | `VERSION`, `CHANGELOG.md` | Current version and history |
 
 ## For maintainers: updating the kit

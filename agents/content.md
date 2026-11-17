@@ -28,6 +28,17 @@ If a required brief field is missing (page type, audience, main action, the top 
 
 Change only what is asked. Keep every block at grade 5.9 or lower, keep the CTA words identical everywhere, and never weaken required compliance wording to make copy fit; if a request conflicts with compliance or approved content, say so instead. Return the `CONTENT FIX REPORT`.
 
+## Tweak rounds
+
+You get `<work>/tweaks.json`, the user's changes from the tweak bar (START-HERE.md 0.7). Your part:
+
+- `copy_edits`: the user's own wording for a slot (`block`, `before`, `after`). Use it as written when it keeps grade 5.9 or lower, the CTA words identical everywhere and compliance intact; otherwise keep their meaning in the closest version that passes and say why.
+- `blocks.order` and `blocks.hidden`: reorder `plan.md` and `content.json`, and remove hidden blocks from both.
+- `blocks.variants` (for example `"M05-B": "M05-A"`): change the block ID in `plan.md` and `content.json`, and write words for any slot the new version has that the old one did not (check its slots in 3.1).
+- Notes that ask for different words.
+
+Ignore the `design` part; it belongs to page-designer. Run `readability.py` again and return the `CONTENT TWEAK REPORT` (each change, what you did, or why not).
+
 ## Never
 
 - Invent practice facts, reviews, ratings, stats, credentials, awards or insurance names. Use `[placeholders]` and list them.

@@ -7,7 +7,8 @@ and footer each need a visible logo (img, svg or .wordmark) at least 24px tall w
 Alignment check at 390 and 1440px: edge near-misses (1 to 12px apart), content overlapping content in another section,
 rows wider than their text column; at 1440px, items in one row (steps, cards, stats, list items) whose tops differ
 by more than 2px. Style check: uppercase on buttons, a.btn and nav links, cliché main fonts (rules/design-build.md 5.3)
-unless listed in --brand-fonts. Saves screenshots at 390 and 1440px."""
+unless listed in --brand-fonts. Tweak leftovers: tweak bar code (data-tw- attributes, tweak data) found in the page.
+Saves screenshots at 390 and 1440px."""
 import json, base64, pathlib, argparse
 from playwright.sync_api import sync_playwright
 ap=argparse.ArgumentParser(); ap.add_argument("file"); ap.add_argument("--axe",default=str(pathlib.Path(__file__).resolve().parent/"vendor"/"axe.min.js"))
@@ -173,4 +174,6 @@ with sync_playwright() as p:
     else: out["axe_violations"]="NOT RUN (axe-core missing)"
     b.close()
 out["file_size_kb"]=round(f.stat().st_size/1024,1)
+src=f.read_text(encoding="utf-8",errors="ignore")
+out["tweak_leftovers"]=[m for m in ("data-tw-","tw-tokens","tw-base","const DATA =") if m in src]   # tweak bar code must never reach the page
 print(json.dumps(out,indent=1))

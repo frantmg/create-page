@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<!-- Tweak bar from the create-page kit (scripts/tweakbar.py). Never delivered as the page itself. -->
+<style>
+:root {
+  --tw-bg: #F4F4F6; --tw-panel: #FFFFFF; --tw-ink: #18181B; --tw-muted: #5B5B66; --tw-line: #E2E2E8;
+  --tw-soft: #F0F0F4; --tw-accent: #C2185B; --tw-accent-ink: #FFFFFF; --tw-ok: #157F3B; --tw-bad: #B3261E; --tw-warn: #8A5A00;
+  --tw-radius: 10px; --tw-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tw-bg: #0F0F12; --tw-panel: #1A1A1F; --tw-ink: #EDEDF0; --tw-muted: #A3A3AE; --tw-line: #2E2E36;
+    --tw-soft: #24242B; --tw-accent: #F06292; --tw-accent-ink: #1A1A1F; --tw-ok: #5CC98A; --tw-bad: #F2867E; --tw-warn: #E5B454;
+  }
+}
+:root[data-theme="dark"] {
+  --tw-bg: #0F0F12; --tw-panel: #1A1A1F; --tw-ink: #EDEDF0; --tw-muted: #A3A3AE; --tw-line: #2E2E36;
+  --tw-soft: #24242B; --tw-accent: #F06292; --tw-accent-ink: #1A1A1F; --tw-ok: #5CC98A; --tw-bad: #F2867E; --tw-warn: #E5B454;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--tw-bg); color: var(--tw-ink); font: 14px/1.45 var(--tw-font); }
+button, input, select, textarea { font: inherit; color: inherit; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 360px; height: 100vh; }
+.stage { display: flex; flex-direction: column; min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--tw-line); background: var(--tw-panel); }
+.toolbar .sep { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--tw-line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 6px 10px; cursor: pointer; min-height: 32px; }
+.seg button + button { border-left: 1px solid var(--tw-line); }
+.seg button[aria-pressed="true"] { background: var(--tw-ink); color: var(--tw-panel); }
+.tog { border: 1px solid var(--tw-line); background: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; min-height: 32px; }
+.tog[aria-pressed="true"] { background: var(--tw-accent); color: var(--tw-accent-ink); border-color: var(--tw-accent); }
+.frame-wrap { flex: 1; overflow: auto; display: flex; justify-content: center; padding: 12px; }
+.frame-wrap iframe { border: 0; background: #fff; height: 100%; min-height: 480px; width: 100%; box-shadow: 0 8px 40px -12px rgb(0 0 0 / .25); border-radius: 4px; flex: none; }
+.banner { padding: 6px 12px; background: var(--tw-accent); color: var(--tw-accent-ink); text-align: center; display: none; }
+.banner.on { display: block; }
+
+.panel { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--tw-line); background: var(--tw-panel); }
+.panel-head { padding: 12px 14px 0; }
+.panel-head h1 { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.panel-head p { margin: 2px 0 10px; color: var(--tw-muted); font-size: 12px; }
+.badge { display: inline-flex; min-width: 22px; height: 22px; padding: 0 7px; align-items: center; justify-content: center; border-radius: 99px; background: var(--tw-accent); color: var(--tw-accent-ink); font-size: 12px; font-weight: 600; }
+.tabs { display: flex; border-bottom: 1px solid var(--tw-line); padding: 0 6px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 9px 4px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--tw-muted); }
+.tabs button[aria-selected="true"] { color: var(--tw-ink); border-color: var(--tw-accent); font-weight: 600; }
+.tab { flex: 1; overflow: auto; padding: 14px; display: none; }
+.tab.on { display: block; }
+.panel.locked .tab, .panel.locked .tabs { opacity: .45; pointer-events: none; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--tw-muted); margin: 18px 0 8px; }
+h2:first-child { margin-top: 0; }
+.hint { color: var(--tw-muted); font-size: 12px; margin: 4px 0 8px; }
+.warn { color: var(--tw-warn); font-size: 12px; margin: 0 0 10px; padding: 8px 10px; border: 1px solid currentColor; border-radius: 8px; }
+.cards { display: grid; gap: 8px; }
+.card { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--tw-line); background: none; border-radius: var(--tw-radius); padding: 8px 10px; cursor: pointer; }
+.card[aria-pressed="true"] { border-color: var(--tw-accent); box-shadow: 0 0 0 1px var(--tw-accent); }
+.sw { display: inline-flex; flex: none; }
+.sw i { width: 16px; height: 22px; display: block; }
+.sw i:first-child { border-radius: 4px 0 0 4px; } .sw i:last-child { border-radius: 0 4px 4px 0; }
+.row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.row label, .row .lbl { flex: 1; min-width: 0; }
+.row input[type="color"] { width: 40px; height: 28px; padding: 0; border: 1px solid var(--tw-line); border-radius: 6px; background: none; cursor: pointer; }
+.row output { width: 46px; text-align: right; font-variant-numeric: tabular-nums; color: var(--tw-muted); }
+.row input[type="range"] { flex: 1.4; accent-color: var(--tw-accent); }
+.mini { border: 1px solid var(--tw-line); background: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; min-height: 28px; }
+.mini:disabled { opacity: .35; cursor: default; }
+.btn { border: 0; background: var(--tw-accent); color: var(--tw-accent-ink); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; min-height: 36px; }
+.btn.ghost { background: none; color: var(--tw-ink); border: 1px solid var(--tw-line); }
+input[type="text"], select, textarea { width: 100%; border: 1px solid var(--tw-line); background: var(--tw-panel); border-radius: 8px; padding: 6px 8px; min-height: 32px; }
+textarea { resize: vertical; min-height: 56px; }
+.contrast { width: 100%; border-collapse: collapse; font-size: 12px; }
+.contrast td { padding: 5px 4px; border-top: 1px solid var(--tw-line); vertical-align: middle; }
+.chip { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 22px; border-radius: 5px; font-weight: 700; font-size: 12px; }
+.ok { color: var(--tw-ok); font-weight: 600; } .bad { color: var(--tw-bad); font-weight: 600; }
+.blk { border: 1px solid var(--tw-line); border-radius: var(--tw-radius); margin-bottom: 6px; }
+.blk.hidden-blk { opacity: .55; }
+.blk.focus { border-color: var(--tw-accent); }
+.blk summary { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: pointer; list-style: none; }
+.blk summary::-webkit-details-marker { display: none; }
+.blk summary .id { font-weight: 700; font-size: 12px; background: var(--tw-soft); border-radius: 5px; padding: 2px 6px; flex: none; }
+.blk summary .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tw-muted); }
+.blk .body { padding: 2px 10px 10px; }
+.blk .body .row label { flex: 0 0 82px; color: var(--tw-muted); font-size: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tw-accent); flex: none; }
+.summary-list { margin: 0; padding-left: 18px; }
+.summary-list li { margin: 3px 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--tw-ink); color: var(--tw-panel); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+.toast.on { opacity: 1; }
+:focus-visible { outline: 2px solid var(--tw-accent); outline-offset: 2px; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 62vh auto; height: auto; }
+  .panel { border-left: 0; border-top: 1px solid var(--tw-line); min-height: 60vh; }
+  .frame-wrap { padding: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <div class="toolbar" role="toolbar" aria-label="Preview">
+      <div class="seg" id="devices" aria-label="Preview width"></div>
+      <span class="sep"></span>
+      <button class="tog" id="t-select" aria-pressed="false" title="Click a block in the page to open its settings">Pick a block</button>
+      <button class="tog" id="t-edit" aria-pressed="false" title="Click any text in the page to change it">Edit text</button>
+      <button class="tog" id="t-orig" aria-pressed="false" title="Show the page as built, without your changes">Show original</button>
+    </div>
+    <div class="banner" id="banner" role="status"></div>
+    <div class="frame-wrap"><iframe id="page" title="Page preview"></iframe></div>
+  </div>
+
+  <aside class="panel" id="panel" aria-label="Design tweaks">
+    <div class="panel-head">
+      <h1>Design tweaks <span class="badge" id="count" title="Changes so far">0</span></h1>
+      <p id="subtitle"></p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Tweak areas">
+      <button role="tab" id="tab-btn-colour" aria-controls="tab-colour" aria-selected="true">Colour</button>
+      <button role="tab" id="tab-btn-type" aria-controls="tab-type" aria-selected="false" tabindex="-1">Type</button>
+      <button role="tab" id="tab-btn-layout" aria-controls="tab-layout" aria-selected="false" tabindex="-1">Shape</button>
+      <button role="tab" id="tab-btn-blocks" aria-controls="tab-blocks" aria-selected="false" tabindex="-1">Blocks</button>
+      <button role="tab" id="tab-btn-finish" aria-controls="tab-finish" aria-selected="false" tabindex="-1">Finish</button>
+    </div>
+
+    <section class="tab on" id="tab-colour" role="tabpanel" aria-labelledby="tab-btn-colour">
+      <p class="warn" id="lock-colours" hidden>The brief sets the brand colours. Changes here are flagged for approval when you finish.</p>
+      <h2>Palettes</h2>
+      <div class="cards" id="palettes"></div>
+      <h2>Try a new main colour</h2>
+      <div class="row">
+        <label for="seed">Pick a colour and we make a palette from it (a close preview; the final colours are worked out with the kit's colour tool).</label>
+        <input type="color" id="seed" value="#1463FF">
+      </div>
+      <div class="actions"><button class="btn ghost" id="make-palette">Make palette</button></div>
+      <h2>Fine-tune colours</h2>
+      <div id="main-colours"></div>
+      <details><summary class="hint" style="cursor:pointer">All colour tokens</summary><div id="all-colours"></div></details>
+      <h2>Contrast check (WCAG AA)</h2>
+      <table class="contrast" id="contrast"></table>
+    </section>
+
+    <section class="tab" id="tab-type" role="tabpanel" aria-labelledby="tab-btn-type">
+      <p class="warn" id="lock-fonts" hidden>The brief sets the brand fonts. Changes here are flagged for approval when you finish.</p>
+      <h2>Font pairings</h2>
+      <div class="cards" id="fonts"></div>
+      <h2>Any Google font</h2>
+      <div class="row"><label for="f-display">Headings</label></div>
+      <input type="text" id="f-display" placeholder="e.g. Fraunces">
+      <div class="row"><label for="f-body">Body text</label></div>
+      <input type="text" id="f-body" placeholder="e.g. Figtree">
+      <div class="actions"><button class="btn ghost" id="apply-fonts">Use these fonts</button></div>
+      <h2>Sizes</h2>
+      <div id="type-sliders"></div>
+    </section>
+
+    <section class="tab" id="tab-layout" role="tabpanel" aria-labelledby="tab-btn-layout">
+      <h2>Shape and space</h2>
+      <div id="layout-sliders"></div>
+      <h2>Buttons and pills</h2>
+      <div class="seg" id="pill" aria-label="Pill shape"></div>
+    </section>
+
+    <section class="tab" id="tab-blocks" role="tabpanel" aria-labelledby="tab-btn-blocks">
+      <p class="hint">Move, hide or swap blocks, change their background and leave notes. Use “Pick a block” to jump here from the page.</p>
+      <div id="blocks"></div>
+      <h2>Header and footer</h2>
+      <div id="gblocks"></div>
+    </section>
+
+    <section class="tab" id="tab-finish" role="tabpanel" aria-labelledby="tab-btn-finish">
+      <h2>Your changes</h2>
+      <ul class="summary-list" id="summary"></ul>
+      <h2>Anything else?</h2>
+      <textarea id="note" placeholder="A general note for the designer"></textarea>
+      <h2>Send to Claude</h2>
+      <p class="hint">Copy your changes and paste them in the chat with Claude, or download the file and tell Claude where it is. Claude applies them to the real page, rechecks it and sends it back.</p>
+      <div class="actions">
+        <button class="btn" id="copy">Copy changes</button>
+        <button class="btn ghost" id="download">Download tweaks.json</button>
+        <button class="btn ghost" id="reset">Start over</button>
+      </div>
+      <details><summary class="hint" style="cursor:pointer">Show the change file</summary>
+        <textarea id="json" readonly rows="12" aria-label="Change file"></textarea>
+      </details>
+    </section>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>const DATA = __TWEAK_DATA__;</script>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== null && v !== undefined && v !== false) e.setAttribute(k, v === true ? '' : v);
+  }
+  kids.flat().forEach(k => k != null && e.append(k));
+  return e;
+};
+const clean = s => (s || '').replace(/\s+/g, ' ').trim();
+const toast = msg => { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1800); };
+
+/* ── Source page, tokens, blocks, alternates ─────────────────────────── */
+const parser = new DOMParser();
+const parse = () => parser.parseFromString(DATA.page, 'text/html');
+const base = parse();
+
+function rootTokens(doc) {
+  const out = {};
+  doc.querySelectorAll('style').forEach(st => {
+    const css = st.textContent.replace(/\/\*[\s\S]*?\*\//g, '');
+    const re = /(^|[}\s,]):root\s*\{([^}]*)\}/g; let m;
+    while ((m = re.exec(css))) m[2].split(';').forEach(d => {
+      const i = d.indexOf(':'); if (i < 0) return;
+      const k = d.slice(0, i).trim(), v = d.slice(i + 1).trim();
+      if (k.startsWith('--') && v) out[k] = v;
+    });
+  });
+  return out;
+}
+const ORIG = rootTokens(base);
+const isColour = v => /^(#[0-9a-f]{3,8}|rgba?\(|hsla?\(|oklch\(|oklab\(|color\()/i.test(v.trim());
+const COLOUR_KEYS = Object.keys(ORIG).filter(k => isColour(ORIG[k]));
+const MAIN_COLOURS = [
+  ['--md-sys-color-primary', 'Main (buttons, links)'], ['--md-sys-color-primary-container', 'Main, soft'],
+  ['--md-sys-color-secondary', 'Second colour'], ['--md-sys-color-tertiary', 'Accent'],
+  ['--md-sys-color-surface', 'Page background'], ['--md-sys-color-surface-container', 'Tinted band'],
+  ['--md-sys-color-on-surface', 'Text'], ['--md-sys-color-inverse-surface', 'Dark band'],
+].filter(([k]) => k in ORIG);
+
+function keyed(doc) {
+  const map = new Map(), n = {};
+  const main = doc.querySelector('main');
+  const gs = [...doc.querySelectorAll('header[data-block], footer[data-block]')].filter(e => !e.closest('main'));
+  const ms = main ? [...main.children].filter(e => e.hasAttribute('data-block')) : [];
+  [...gs, ...ms].forEach(e => {
+    const id = e.getAttribute('data-block'); n[id] = (n[id] || 0) + 1;
+    const key = n[id] > 1 ? `${id}#${n[id]}` : id;
+    e.setAttribute('data-tw-key', key); map.set(key, e);
+  });
+  return map;
+}
+const BASE_MAP = keyed(base);
+const labelOf = e => { const h = e.querySelector('h1,h2,h3,h4,p,blockquote,li'); return clean(h ? h.textContent : e.textContent).slice(0, 60); };
+const isG = e => e.tagName === 'HEADER' || e.tagName === 'FOOTER';
+const BLOCKS = [...BASE_MAP].filter(([, e]) => !isG(e)).map(([key, e]) => ({ key, id: e.getAttribute('data-block'), label: labelOf(e) }));
+const GBLOCKS = [...BASE_MAP].filter(([, e]) => isG(e)).map(([key, e]) => ({ key, id: e.getAttribute('data-block'), label: e.tagName === 'HEADER' ? 'Header' : 'Footer' }));
+const ORIG_ORDER = BLOCKS.map(b => b.key);
+
+const ALTS = {}; let ALT_CSS = '';
+if (DATA.alternates) {
+  const ad = parser.parseFromString(DATA.alternates, 'text/html');
+  ad.querySelectorAll('template[data-alt-for]').forEach(t => {
+    const f = t.getAttribute('data-alt-for'), root = t.content.firstElementChild;
+    if (!root) return;
+    const variant = t.getAttribute('data-variant') || root.getAttribute('data-block') || 'alt';
+    (ALTS[f] ||= []).push({ variant, label: t.getAttribute('data-label') || variant, html: t.innerHTML.trim() });
+  });
+  ALT_CSS = [...ad.querySelectorAll('style')].map(s => s.textContent).join('\n');
+}
+
+const BG = { '': 'As built', surface: 'Plain', low: 'Light tint', tint: 'Tint', brand: 'Brand colour', dark: 'Dark' };
+const TW_CSS = `
+[data-tw-hidden]{display:none!important}
+[data-tw-bg]{background:var(--tw-b)!important;color:var(--tw-f)!important}
+[data-tw-bg=surface]{--tw-b:var(--md-sys-color-surface);--tw-f:var(--md-sys-color-on-surface)}
+[data-tw-bg=low]{--tw-b:var(--md-sys-color-surface-container-low,var(--md-sys-color-surface));--tw-f:var(--md-sys-color-on-surface)}
+[data-tw-bg=tint]{--tw-b:var(--md-sys-color-surface-container,var(--md-sys-color-surface));--tw-f:var(--md-sys-color-on-surface)}
+[data-tw-bg=brand]{--tw-b:var(--md-sys-color-primary-container);--tw-f:var(--md-sys-color-on-primary-container)}
+[data-tw-bg=dark]{--tw-b:var(--md-sys-color-inverse-surface);--tw-f:var(--md-sys-color-inverse-on-surface)}
+:is([data-tw-bg=dark],[data-tw-bg=brand]) :is(h1,h2,h3,h4,p,li,a:not(.btn)){color:inherit}
+html.tw-select [data-tw-key]{cursor:pointer}
+html.tw-select [data-tw-key]:hover,[data-tw-focus]{outline:3px dashed #C2185B!important;outline-offset:-3px}
+html.tw-edit [contenteditable]{cursor:text}
+html.tw-edit [contenteditable]:hover{outline:1px dashed #C2185B;outline-offset:2px}
+html.tw-edit [contenteditable]:focus{outline:2px solid #C2185B;outline-offset:2px}
+html.tw-edit [data-tw-edited]{background-image:linear-gradient(rgb(194 24 91 / .12),rgb(194 24 91 / .12))}`;
+
+/* ── State (kept per page in this browser) ───────────────────────────── */
+const KEY = 'tw:' + DATA.page_hash;
+const fresh = () => ({ palette: '', seedPalette: null, tokens: {}, fonts: null,
+  scale: { heading: 1, body: 1, space: 1, radius: 1, shadow: 1 }, gridMax: null, pill: '',
+  order: null, hidden: [], variants: {}, bg: {}, notes: {}, copy: [], note: '' });
+let state = (() => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(fresh(), s, { scale: Object.assign(fresh().scale, s.scale) }); } catch (e) {} return fresh(); })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} refreshSummary(); };
+
+const PALETTES = () => [{ name: '', label: 'As built', tokens: {} }, ...(DATA.palettes || []).map(p => ({ name: p.name, label: p.name, tokens: p.tokens || {} })),
+  ...(state.seedPalette ? [{ name: state.seedPalette.name, label: state.seedPalette.name, tokens: state.seedPalette.tokens, seed: state.seedPalette.seed }] : [])];
+
+/* ── Colour maths: parse, contrast, OKLCH palette from one colour ────── */
+const hex2rgb = h => { h = h.replace('#', ''); if (h.length === 3) h = [...h].map(c => c + c).join(''); const n = parseInt(h.slice(0, 6), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const rgb2hex = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+const lum = c => { const [r, g, b] = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+const gam = v => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+function toOklch(rgb) {
+  const [r, g, b] = rgb.map(lin);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+  return [L, Math.hypot(A, B), (Math.atan2(B, A) * 180 / Math.PI + 360) % 360];
+}
+function oklchRgb(L, C, H) {
+  const a = C * Math.cos(H * Math.PI / 180), b = C * Math.sin(H * Math.PI / 180);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+}
+function oklchHex(L, C, H) { // reduce chroma until the colour fits in sRGB
+  for (let c = C; c >= 0; c -= 0.004) { const v = oklchRgb(L, c, H); if (v.every(x => x >= -0.0005 && x <= 1.0005)) return rgb2hex(v.map(x => gam(Math.min(1, Math.max(0, x))))); }
+  return rgb2hex(oklchRgb(L, 0, H).map(x => gam(Math.min(1, Math.max(0, x)))));
+}
+function paletteFrom(seedHex) {
+  const [, c0, h] = toOklch(hex2rgb(seedHex)), c = Math.max(c0, 0.02), t = (h + 60) % 360;
+  const P = {
+    'primary': [0.47, c, h], 'on-primary': [1, 0, h], 'primary-container': [0.90, c * 0.35, h], 'on-primary-container': [0.28, c * 0.8, h],
+    'secondary': [0.48, c * 0.35, h], 'on-secondary': [1, 0, h], 'secondary-container': [0.91, c * 0.25, h], 'on-secondary-container': [0.30, c * 0.35, h],
+    'tertiary': [0.48, c * 0.7, t], 'on-tertiary': [1, 0, t], 'tertiary-container': [0.90, c * 0.3, t], 'on-tertiary-container': [0.28, c * 0.6, t],
+    'surface': [0.985, 0.006, h], 'on-surface': [0.22, 0.012, h], 'on-surface-variant': [0.40, 0.02, h],
+    'surface-container-lowest': [1, 0, h], 'surface-container-low': [0.965, 0.01, h], 'surface-container': [0.95, 0.012, h], 'surface-container-high': [0.935, 0.014, h], 'surface-container-highest': [0.92, 0.016, h],
+    'inverse-surface': [0.30, 0.015, h], 'inverse-on-surface': [0.96, 0.008, h], 'inverse-primary': [0.80, c * 0.6, h],
+    'outline': [0.56, 0.02, h], 'outline-variant': [0.82, 0.02, h],
+  };
+  const out = {};
+  for (const [k, v] of Object.entries(P)) { const name = '--md-sys-color-' + k; if (name in ORIG) out[name] = oklchHex(...v); }
+  return out;
+}
+
+/* ── Building the preview ────────────────────────────────────────────── */
+function scaleShadow(v, k) {
+  return v.replace(/\/\s*([\d.]+)\s*\)/g, (m, a) => `/ ${Math.min(1, a * k).toFixed(3)})`).replace(/rgba\(([^)]*?),\s*([\d.]+)\s*\)/g, (m, c, a) => `rgba(${c}, ${Math.min(1, a * k).toFixed(3)})`);
+}
+function effective() {
+  const t = {}, p = PALETTES().find(x => x.name === state.palette);
+  if (p) Object.assign(t, p.tokens);
+  Object.assign(t, state.tokens);
+  if (state.fonts) { t['--font-display'] = state.fonts.display; t['--font-body'] = state.fonts.body; }
+  const s = state.scale, mul = (keys, k) => keys.forEach(x => { if (ORIG[x]) t[x] = `calc(${ORIG[x]} * ${k})`; });
+  if (s.heading !== 1) mul(['--text-h1', '--text-h2', '--text-h3', '--text-h4'], s.heading);
+  if (s.body !== 1) mul(['--text-body', '--text-lead', '--text-caption'], s.body);
+  if (s.space !== 1) mul(['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6'], s.space);
+  if (s.radius !== 1) mul(['--radius-s', '--radius-m', '--radius-l'], s.radius);
+  if (s.shadow !== 1) ['--shadow-soft', '--shadow-raised', '--shadow-float'].forEach(x => { if (ORIG[x]) t[x] = s.shadow === 0 ? 'none' : scaleShadow(ORIG[x], s.shadow); });
+  if (state.gridMax) t['--grid-max'] = state.gridMax + 'rem';
+  if (state.pill) t['--radius-pill'] = { pill: '999px', rounded: 'var(--radius-m)', square: 'var(--radius-s)' }[state.pill];
+  return t;
+}
+const tokenCss = () => ':root{' + Object.entries(effective()).map(([k, v]) => `${k}:${v};`).join('') + '}';
+const pathOf = (root, node) => { const p = []; while (node && node !== root) { p.unshift([...node.parentElement.children].indexOf(node)); node = node.parentElement; } return p; };
+const byPath = (root, p) => p.reduce((n, i) => n && n.children[i], root);
+const variantOf = key => state.variants[key] || '';
+
+function build(original) {
+  const doc = parse();
+  if (original) return '<!doctype html>\n' + doc.documentElement.outerHTML;
+  const add = (tag, props) => { const e = doc.createElement(tag); Object.assign(e, props); doc.head.appendChild(e); return e; };
+  if (state.fonts && state.fonts.href) add('link', { rel: 'stylesheet', href: state.fonts.href });
+  if (ALT_CSS) add('style', { textContent: ALT_CSS });
+  add('style', { id: 'tw-base', textContent: TW_CSS });
+  add('style', { id: 'tw-tokens', textContent: tokenCss() });
+  const map = keyed(doc);
+  for (const [key, v] of Object.entries(state.variants)) {
+    const e = map.get(key), alt = e && (ALTS[e.getAttribute('data-block')] || []).find(a => a.variant === v);
+    if (!alt) continue;
+    const tpl = doc.createElement('template'); tpl.innerHTML = alt.html;
+    const nu = tpl.content.firstElementChild; if (!nu) continue;
+    nu.setAttribute('data-tw-key', key); nu.setAttribute('data-tw-variant', v);
+    e.replaceWith(nu); map.set(key, nu);
+  }
+  if (state.order) {
+    const marks = ORIG_ORDER.map(k => { const m = doc.createComment('tw'); map.get(k).before(m); return m; });
+    ORIG_ORDER.forEach(k => map.get(k).remove());
+    const order = [...state.order.filter(k => map.has(k)), ...ORIG_ORDER.filter(k => !state.order.includes(k))];
+    marks.forEach((m, i) => m.replaceWith(map.get(order[i])));
+  }
+  map.forEach((e, k) => {
+    if (state.hidden.includes(k)) e.setAttribute('data-tw-hidden', '');
+    if (state.bg[k]) e.setAttribute('data-tw-bg', state.bg[k]);
+  });
+  state.copy.forEach(c => {
+    const e = map.get(c.key); if (!e || (e.getAttribute('data-tw-variant') || '') !== c.variant) return;
+    const n = byPath(e, c.path); if (n) { n.innerHTML = c.afterHtml; n.setAttribute('data-tw-edited', ''); }
+  });
+  return '<!doctype html>\n' + doc.documentElement.outerHTML;
+}
+
+const frame = $('#page');
+const fdoc = () => frame.contentDocument;
+let scrollY = 0, showOriginal = false, mode = { select: false, edit: false };
+function render() {
+  try { scrollY = frame.contentWindow.scrollY || 0; } catch (e) {}
+  frame.srcdoc = build(showOriginal);
+}
+function live() { // token-only changes, no reload
+  const s = fdoc() && fdoc().getElementById('tw-tokens');
+  if (s) s.textContent = tokenCss(); else render();
+  setTimeout(contrast, 30); save();
+}
+frame.addEventListener('load', () => {
+  const w = frame.contentWindow, d = fdoc();
+  w.scrollTo({ top: scrollY, behavior: 'instant' });
+  if (showOriginal) return;
+  d.addEventListener('click', onFrameClick, true);
+  d.addEventListener('submit', e => e.preventDefault(), true);
+  d.addEventListener('focusin', onFocusIn);
+  d.addEventListener('focusout', onFocusOut);
+  d.addEventListener('keydown', e => { if (e.target.isContentEditable && (e.key === 'Enter' || e.key === 'Escape')) { e.preventDefault(); e.target.blur(); } });
+  d.addEventListener('paste', e => { if (!e.target.isContentEditable) return; e.preventDefault(); d.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
+  setModes(); contrast();
+});
+
+/* ── Pick a block / edit text inside the preview ─────────────────────── */
+const BLOCK_TEXT = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,summary,td,th,dt,dd,legend,cite';
+const MEDIA = 'img,svg,picture,video,input,select,textarea,iframe';
+function editable(d) {
+  const out = [];
+  d.querySelectorAll('[data-tw-key]').forEach(b => {
+    b.querySelectorAll(BLOCK_TEXT).forEach(e => { if (!e.querySelector(BLOCK_TEXT) && !e.querySelector(MEDIA) && clean(e.textContent)) out.push(e); });
+    b.querySelectorAll('a,button,label').forEach(e => { if (!e.closest(BLOCK_TEXT) && !e.querySelector(BLOCK_TEXT) && !e.querySelector(MEDIA) && clean(e.textContent)) out.push(e); });
+  });
+  return out;
+}
+function setModes() {
+  const d = fdoc(); if (!d || showOriginal) return;
+  d.documentElement.classList.toggle('tw-select', mode.select);
+  d.documentElement.classList.toggle('tw-edit', mode.edit);
+  editable(d).forEach(e => mode.edit ? e.setAttribute('contenteditable', 'true') : e.removeAttribute('contenteditable'));
+}
+function onFrameClick(e) {
+  if (mode.edit) { if (e.target.closest('a,button,summary,label')) e.preventDefault(); return; }
+  if (!mode.select) return;
+  const b = e.target.closest('[data-tw-key]'); if (!b) return;
+  e.preventDefault(); e.stopPropagation(); openBlock(b.getAttribute('data-tw-key'));
+}
+function onFocusIn(e) { const t = e.target; if (t.getAttribute && t.getAttribute('contenteditable') === 'true' && !t._tw) t._tw = { html: t.innerHTML, text: clean(t.innerText) }; }
+function onFocusOut(e) {
+  const t = e.target; if (!t.getAttribute || t.getAttribute('contenteditable') !== 'true' || !t._tw) return;
+  const b = t.closest('[data-tw-key]'), key = b.getAttribute('data-tw-key'), variant = b.getAttribute('data-tw-variant') || '', path = pathOf(b, t);
+  const id = `${key}|${variant}|${path.join('.')}`;
+  let c = state.copy.find(x => x.id === id);
+  const html = t.innerHTML, text = clean(t.innerText);
+  if (!c) { if (t._tw.html === html) return; c = { id, key, variant, path, tag: t.tagName.toLowerCase(), beforeText: t._tw.text }; state.copy.push(c); }
+  c.afterHtml = html; c.afterText = text;
+  if (c.afterText === c.beforeText) state.copy = state.copy.filter(x => x !== c);
+  t.toggleAttribute('data-tw-edited', state.copy.includes(c));
+  save(); renderBlocks();
+}
+
+/* ── Panel: tabs, toolbar ────────────────────────────────────────────── */
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function selectTab(t) { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; $('#' + x.getAttribute('aria-controls')).classList.toggle('on', on); }); if (t.id === 'tab-btn-finish') refreshSummary(); }
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => selectTab(t));
+  t.addEventListener('keydown', e => { const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key]; if (n === undefined) return; e.preventDefault(); const x = tabs[(n + tabs.length) % tabs.length]; selectTab(x); x.focus(); });
+});
+const DEVICES = [['Fit', '100%'], ['1440', '1440px'], ['1024', '1024px'], ['768', '768px'], ['390', '390px'], ['320', '320px']];
+DEVICES.forEach(([label, w], i) => $('#devices').append(el('button', { 'aria-pressed': i === 0, title: i ? `${label}px wide` : 'Fill the window', onclick: e => {
+  frame.style.width = w; [...$('#devices').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget));
+} }, label)));
+const toggle = (btn, fn) => btn.addEventListener('click', () => { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', on); fn(on); });
+toggle($('#t-select'), on => { mode.select = on; if (on) { mode.edit = false; $('#t-edit').setAttribute('aria-pressed', false); } setModes(); });
+toggle($('#t-edit'), on => { mode.edit = on; if (on) { mode.select = false; $('#t-select').setAttribute('aria-pressed', false); } setModes(); banner(on ? 'Edit text: click any text in the page and type. Enter or Esc to finish. Edits go to the copywriter to keep the reading level.' : ''); });
+toggle($('#t-orig'), on => { showOriginal = on; $('#panel').classList.toggle('locked', on); ['#t-select', '#t-edit'].forEach(s => $(s).disabled = on); banner(on ? 'Showing the page as built. Turn off “Show original” to see your changes.' : ''); render(); });
+function banner(t) { const b = $('#banner'); b.textContent = t; b.classList.toggle('on', !!t); }
+
+/* ── Colour tab ──────────────────────────────────────────────────────── */
+const resolveColour = v => { // any CSS colour -> [r,g,b] using the preview
+  const d = fdoc(); if (!d || !d.body) return null;
+  if (/^#[0-9a-f]{3,8}$/i.test(v)) return hex2rgb(v);
+  const p = d.createElement('i'); p.style.color = v; d.body.appendChild(p);
+  const c = d.defaultView.getComputedStyle(p).color; p.remove();
+  const n = c.match(/[\d.]+/g); if (!n) return null;
+  return c.startsWith('color(') ? n.slice(0, 3).map(x => x * 255) : n.slice(0, 3).map(Number);
+};
+const tokenValue = k => { const d = fdoc(); return d && d.documentElement ? d.defaultView.getComputedStyle(d.documentElement).getPropertyValue(k).trim() : (effective()[k] || ORIG[k]); };
+const tokenHex = k => { const v = tokenValue(k) || ORIG[k] || '#000000'; const c = resolveColour(v); return c ? rgb2hex(c) : (/^#/.test(v) ? v : '#000000'); };
+
+function renderPalettes() {
+  const box = $('#palettes'); box.replaceChildren();
+  const show = ['--md-sys-color-primary', '--md-sys-color-primary-container', '--md-sys-color-secondary', '--md-sys-color-tertiary', '--md-sys-color-surface', '--md-sys-color-inverse-surface'];
+  PALETTES().forEach(p => {
+    const sw = el('span', { class: 'sw', 'aria-hidden': 'true' }, show.filter(k => k in ORIG).map(k => el('i', { style: `background:${p.tokens[k] || ORIG[k]}` })));
+    box.append(el('button', { class: 'card', 'aria-pressed': state.palette === p.name, onclick: () => {
+      state.palette = p.name; COLOUR_KEYS.forEach(k => delete state.tokens[k]); renderPalettes(); live(); setTimeout(renderPickers, 60);
+    } }, sw, el('span', { text: p.label })));
+  });
+}
+function picker(k, label) {
+  const input = el('input', { type: 'color', id: 'c' + k, value: '#000000', oninput: e => { state.tokens[k] = e.target.value.toUpperCase(); live(); } });
+  input.dataset.token = k;
+  const reset = el('button', { class: 'mini', title: 'Back to the palette value', onclick: () => { delete state.tokens[k]; live(); setTimeout(renderPickers, 60); } }, 'Reset');
+  return el('div', { class: 'row' }, el('label', { for: 'c' + k, text: label, title: k }), input, reset);
+}
+function renderPickers() {
+  document.querySelectorAll('input[data-token]').forEach(i => { i.value = tokenHex(i.dataset.token); });
+}
+MAIN_COLOURS.forEach(([k, l]) => $('#main-colours').append(picker(k, l)));
+COLOUR_KEYS.forEach(k => $('#all-colours').append(picker(k, k.replace('--md-sys-color-', '').replace(/-/g, ' '))));
+$('#make-palette').addEventListener('click', () => {
+  const seed = $('#seed').value.toUpperCase();
+  state.seedPalette = { name: `From ${seed}`, seed, tokens: paletteFrom(seed) };
+  state.palette = state.seedPalette.name; COLOUR_KEYS.forEach(k => delete state.tokens[k]);
+  renderPalettes(); live(); setTimeout(renderPickers, 60); toast('Palette made');
+});
+const PAIRS = [
+  ['--md-sys-color-on-surface', '--md-sys-color-surface', 'Text on page', 4.5],
+  ['--md-sys-color-on-surface-variant', '--md-sys-color-surface', 'Muted text', 4.5],
+  ['--md-sys-color-primary', '--md-sys-color-surface', 'Links on page', 4.5],
+  ['--md-sys-color-on-primary', '--md-sys-color-primary', 'Button text', 4.5],
+  ['--md-sys-color-on-primary-container', '--md-sys-color-primary-container', 'Text on soft main', 4.5],
+  ['--md-sys-color-on-secondary', '--md-sys-color-secondary', 'Text on second colour', 4.5],
+  ['--md-sys-color-on-secondary-container', '--md-sys-color-secondary-container', 'Text on soft second', 4.5],
+  ['--md-sys-color-on-tertiary', '--md-sys-color-tertiary', 'Text on accent', 4.5],
+  ['--md-sys-color-on-surface', '--md-sys-color-surface-container', 'Text on tinted band', 4.5],
+  ['--md-sys-color-inverse-on-surface', '--md-sys-color-inverse-surface', 'Text on dark band', 4.5],
+  ['--md-sys-color-outline', '--md-sys-color-surface', 'Field borders', 3],
+].filter(([a, b]) => a in ORIG && b in ORIG);
+let lastContrast = [];
+function contrast() {
+  const t = $('#contrast'); t.replaceChildren(); lastContrast = [];
+  if (!fdoc() || showOriginal) return;
+  PAIRS.forEach(([fg, bg, label, min]) => {
+    const a = resolveColour(tokenValue(fg)), b = resolveColour(tokenValue(bg)); if (!a || !b) return;
+    const r = ratio(a, b), pass = r >= min;
+    lastContrast.push({ pair: label, fg, bg, ratio: +r.toFixed(2), needs: min, pass });
+    t.append(el('tr', {}, el('td', {}, el('span', { class: 'chip', style: `background:${rgb2hex(b)};color:${rgb2hex(a)}`, 'aria-hidden': 'true' }, 'Aa')),
+      el('td', { text: label }), el('td', { text: r.toFixed(1) + ':1' }), el('td', { class: pass ? 'ok' : 'bad', text: pass ? 'Pass' : `Fail (needs ${min})` })));
+  });
+}
+
+/* ── Type tab ────────────────────────────────────────────────────────── */
+const FONT_OPTS = () => [{ name: '', label: 'As built' }, ...(DATA.fonts || []).map(f => ({ ...f, label: f.name })), ...(state.fonts && state.fonts.custom ? [{ ...state.fonts, label: state.fonts.name }] : [])];
+function renderFonts() {
+  const box = $('#fonts'); box.replaceChildren();
+  const cur = state.fonts ? state.fonts.name : '';
+  FONT_OPTS().forEach(f => box.append(el('button', { class: 'card', 'aria-pressed': cur === f.name, onclick: () => {
+    state.fonts = f.name ? { name: f.name, display: f.display, body: f.body, href: f.href || '', custom: !!f.custom } : null;
+    save(); renderFonts(); render();
+  } }, el('span', { text: f.label }))));
+}
+async function googleHref(family) {
+  const enc = family.trim().replace(/\s+/g, '+');
+  for (const axes of [':wght@400;600;700', ':wght@400;700', '']) {
+    const url = `https://fonts.googleapis.com/css2?family=${enc}${axes}&display=swap`;
+    try { const r = await fetch(url); if (r.ok) return `family=${enc}${axes}`; } catch (e) { return `family=${enc}:wght@400;700`; }
+  }
+  return null;
+}
+$('#apply-fonts').addEventListener('click', async () => {
+  const d = clean($('#f-display').value), b = clean($('#f-body').value) || d;
+  if (!d) { toast('Type a heading font name'); return; }
+  const parts = [await googleHref(d), b !== d ? await googleHref(b) : null];
+  if (!parts[0] || (b !== d && !parts[1])) { toast('Google Fonts does not have that font name'); return; }
+  const stack = n => `"${n}", ${/serif/i.test(ORIG['--font-body'] || '') && !/sans/i.test(ORIG['--font-body'] || '') ? 'Georgia, serif' : 'system-ui, sans-serif'}`;
+  state.fonts = { name: b !== d ? `${d} + ${b}` : d, display: stack(d), body: stack(b), href: 'https://fonts.googleapis.com/css2?' + parts.filter(Boolean).join('&') + '&display=swap', custom: true };
+  save(); renderFonts(); render();
+});
+function slider(box, key, label, min, max, step, fmt) {
+  const id = 's-' + key, val = () => state.scale[key];
+  const out = el('output', { for: id, text: fmt(val()) });
+  const input = el('input', { type: 'range', id, min, max, step, value: val(), oninput: e => { state.scale[key] = +e.target.value; out.textContent = fmt(state.scale[key]); live(); } });
+  const reset = el('button', { class: 'mini', onclick: () => { state.scale[key] = 1; input.value = 1; out.textContent = fmt(1); live(); } }, 'Reset');
+  box.append(el('div', { class: 'row' }, el('label', { for: id, text: label }), input, out, reset));
+}
+const pct = v => Math.round(v * 100) + '%';
+slider($('#type-sliders'), 'heading', 'Headings', 0.8, 1.3, 0.02, pct);
+slider($('#type-sliders'), 'body', 'Body text', 0.9, 1.15, 0.01, pct);
+
+/* ── Shape tab ───────────────────────────────────────────────────────── */
+slider($('#layout-sliders'), 'space', 'Spacing', 0.7, 1.4, 0.05, pct);
+slider($('#layout-sliders'), 'radius', 'Corners', 0, 2.5, 0.1, v => v === 0 ? 'Sharp' : pct(v));
+slider($('#layout-sliders'), 'shadow', 'Shadows', 0, 2.5, 0.1, v => v === 0 ? 'None' : pct(v));
+(() => {
+  const m = /^([\d.]+)rem$/.exec(ORIG['--grid-max'] || ''); if (!m) return;
+  const orig = +m[1], id = 's-width', out = el('output', { for: id, text: (state.gridMax || orig) + 'rem' });
+  const input = el('input', { type: 'range', id, min: 56, max: 100, step: 1, value: state.gridMax || orig, oninput: e => { state.gridMax = +e.target.value === orig ? null : +e.target.value; out.textContent = e.target.value + 'rem'; live(); } });
+  const reset = el('button', { class: 'mini', onclick: () => { state.gridMax = null; input.value = orig; out.textContent = orig + 'rem'; live(); } }, 'Reset');
+  $('#layout-sliders').append(el('div', { class: 'row' }, el('label', { for: id, text: 'Page width' }), input, out, reset));
+})();
+[['', 'As built'], ['pill', 'Pill'], ['rounded', 'Rounded'], ['square', 'Square']].forEach(([v, l]) => $('#pill').append(el('button', { 'aria-pressed': state.pill === v, onclick: e => {
+  state.pill = v; [...$('#pill').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget)); live();
+} }, l)));
+
+/* ── Blocks tab ──────────────────────────────────────────────────────── */
+const curOrder = () => state.order || ORIG_ORDER.slice();
+function setOrder(o) { state.order = o.join() === ORIG_ORDER.join() ? null : o; }
+function focusBlock(key, on) {
+  const d = fdoc(); if (!d) return;
+  d.querySelectorAll('[data-tw-focus]').forEach(e => e.removeAttribute('data-tw-focus'));
+  const e = on && d.querySelector(`[data-tw-key="${CSS.escape(key)}"]`); if (e) e.setAttribute('data-tw-focus', '');
+}
+function blockItem(b, isGBlock) {
+  const key = b.key, hidden = state.hidden.includes(key), alts = ALTS[b.id] || [], v = variantOf(key);
+  const changed = hidden || v || state.bg[key] || state.notes[key] || state.copy.some(c => c.key === key && c.variant === v);
+  const order = curOrder(), i = order.indexOf(key);
+  const sum = el('summary', {}, changed ? el('span', { class: 'dot', title: 'Changed' }) : null,
+    el('span', { class: 'id', text: v || b.id }), el('span', { class: 'name', text: b.label }));
+  const body = el('div', { class: 'body' });
+  if (!isGBlock) {
+    body.append(el('div', { class: 'row' },
+      el('span', { class: 'lbl', text: hidden ? 'Hidden' : 'Position ' + (i + 1) }),
+      el('button', { class: 'mini', disabled: i === 0, onclick: () => move(key, -1), 'aria-label': `Move ${b.id} up` }, '↑ Up'),
+      el('button', { class: 'mini', disabled: i === order.length - 1, onclick: () => move(key, 1), 'aria-label': `Move ${b.id} down` }, '↓ Down'),
+      el('button', { class: 'mini', onclick: () => { state.hidden = hidden ? state.hidden.filter(k => k !== key) : [...state.hidden, key]; save(); renderBlocks(); render(); } }, hidden ? 'Show' : 'Hide')));
+    const sel = el('select', { id: 'v-' + key, onchange: e => { if (e.target.value) state.variants[key] = e.target.value; else delete state.variants[key]; save(); renderBlocks(); render(); } },
+      el('option', { value: '', text: `As built (${b.id})` }), alts.map(a => el('option', { value: a.variant, selected: a.variant === v, text: a.label === a.variant ? a.variant : `${a.label} (${a.variant})` })));
+    if (!alts.length) sel.disabled = true;
+    body.append(el('div', { class: 'row' }, el('label', { for: 'v-' + key, text: 'Swap to' }), sel));
+    if (!alts.length) body.append(el('p', { class: 'hint', text: 'No other versions were built for this block. Ask for one in the note.' }));
+  }
+  const bg = el('select', { id: 'b-' + key, onchange: e => { if (e.target.value) state.bg[key] = e.target.value; else delete state.bg[key]; save(); renderBlocks(); render(); } },
+    Object.entries(BG).map(([val, l]) => el('option', { value: val, selected: (state.bg[key] || '') === val, text: l })));
+  body.append(el('div', { class: 'row' }, el('label', { for: 'b-' + key, text: 'Background' }), bg));
+  const edits = state.copy.filter(c => c.key === key && c.variant === v).length;
+  if (edits) body.append(el('p', { class: 'hint', text: `${edits} text edit${edits > 1 ? 's' : ''} in this block.` }));
+  body.append(el('label', { class: 'hint', for: 'n-' + key, text: 'Note for the designer' }),
+    el('textarea', { id: 'n-' + key, oninput: e => { const t = e.target.value; if (t.trim()) state.notes[key] = t; else delete state.notes[key]; save(); } }, state.notes[key] || ''));
+  body.append(el('div', { class: 'actions' }, el('button', { class: 'mini', onclick: () => { const e = fdoc() && fdoc().querySelector(`[data-tw-key="${CSS.escape(key)}"]`); if (e) e.scrollIntoView({ behavior: 'instant', block: 'start' }); } }, 'Show in page')));
+  const d = el('details', { class: 'blk' + (hidden ? ' hidden-blk' : ''), 'data-key': key }, sum, body);
+  d.addEventListener('mouseenter', () => focusBlock(key, true));
+  d.addEventListener('mouseleave', () => focusBlock(key, false));
+  return d;
+}
+function move(key, dir) {
+  const o = curOrder(), i = o.indexOf(key), j = i + dir; if (j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]]; setOrder(o); save(); renderBlocks(key); render();
+}
+function renderBlocks(openKey) {
+  const open = new Set([...document.querySelectorAll('.blk[open]')].map(d => d.dataset.key)); if (openKey) open.add(openKey);
+  const byKey = Object.fromEntries(BLOCKS.map(b => [b.key, b]));
+  $('#blocks').replaceChildren(...curOrder().map(k => blockItem(byKey[k], false)));
+  $('#gblocks').replaceChildren(...GBLOCKS.map(b => blockItem(b, true)));
+  document.querySelectorAll('.blk').forEach(d => { if (open.has(d.dataset.key)) d.open = true; });
+}
+function openBlock(key) {
+  selectTab($('#tab-btn-blocks')); renderBlocks(key);
+  const d = document.querySelector(`.blk[data-key="${CSS.escape(key)}"]`);
+  if (d) { d.open = true; d.classList.add('focus'); d.scrollIntoView({ block: 'nearest' }); setTimeout(() => d.classList.remove('focus'), 1500); }
+}
+
+/* ── Finish tab: summary and export ──────────────────────────────────── */
+function summaryLines() {
+  const L = [], label = k => { const b = BLOCKS.find(x => x.key === k) || GBLOCKS.find(x => x.key === k); return b ? b.key : k; };
+  const p = PALETTES().find(x => x.name === state.palette);
+  if (state.palette) L.push(p && p.seed ? `Colours: new palette from ${p.seed}` : `Colours: palette “${state.palette}”`);
+  Object.entries(state.tokens).forEach(([k, v]) => L.push(`Colour ${k.replace('--md-sys-color-', '')}: ${v}`));
+  if (state.fonts) L.push(`Fonts: ${state.fonts.name}`);
+  const names = { heading: 'Headings', body: 'Body text', space: 'Spacing', radius: 'Corners', shadow: 'Shadows' };
+  Object.entries(state.scale).forEach(([k, v]) => { if (v !== 1) L.push(`${names[k]}: ${v === 0 ? (k === 'radius' ? 'sharp' : 'none') : pct(v)}`); });
+  if (state.gridMax) L.push(`Page width: ${state.gridMax}rem`);
+  if (state.pill) L.push(`Buttons and pills: ${state.pill}`);
+  if (state.order) L.push(`New block order: ${state.order.filter(k => !state.hidden.includes(k)).join(', ')}`);
+  state.hidden.forEach(k => L.push(`Hide ${label(k)}`));
+  Object.entries(state.variants).forEach(([k, v]) => L.push(`Swap ${label(k)} to ${v}`));
+  Object.entries(state.bg).forEach(([k, v]) => L.push(`${label(k)} background: ${BG[v]}`));
+  Object.entries(state.notes).forEach(([k, v]) => L.push(`Note on ${label(k)}: “${clean(v).slice(0, 80)}”`));
+  const edits = activeEdits();
+  if (edits.length) L.push(`${edits.length} text edit${edits.length > 1 ? 's' : ''}`);
+  if (clean(state.note)) L.push(`General note: “${clean(state.note).slice(0, 80)}”`);
+  return L;
+}
+const activeEdits = () => state.copy.filter(c => c.variant === variantOf(c.key));
+function exportData() {
+  const eff = effective(), tokens = {};
+  Object.entries(eff).forEach(([k, v]) => { if ((ORIG[k] || '') !== v) tokens[k] = { from: ORIG[k] ?? null, to: v }; });
+  const locked = DATA.brand_locked || {}, colourChanged = Object.keys(tokens).some(k => COLOUR_KEYS.includes(k));
+  const p = PALETTES().find(x => x.name === state.palette);
+  return {
+    tool: 'create-page tweak bar', kit_version: DATA.kit_version, page: DATA.page_file, page_hash: DATA.page_hash, exported: new Date().toISOString(),
+    design: {
+      palette: state.palette || null, palette_seed: p && p.seed ? p.seed : null,
+      fonts: state.fonts ? { name: state.fonts.name, display: state.fonts.display, body: state.fonts.body, href: state.fonts.href } : null,
+      tokens, scale: state.scale, grid_max_rem: state.gridMax, pill: state.pill || null,
+    },
+    blocks: {
+      original_order: ORIG_ORDER, order: state.order, hidden: state.hidden, variants: state.variants,
+      backgrounds: Object.fromEntries(Object.entries(state.bg).map(([k, v]) => [k, BG[v]])), notes: state.notes,
+    },
+    copy_edits: activeEdits().map(c => ({ block: c.key, variant: c.variant || null, element: c.tag, path: c.path, before: c.beforeText, after: c.afterText })),
+    contrast_failures: lastContrast.filter(x => !x.pass),
+    brand_overrides: [...(locked.colors && colourChanged ? ['colors'] : []), ...(locked.fonts && state.fonts ? ['fonts'] : [])],
+    note: clean(state.note) || null,
+    summary: summaryLines(),
+  };
+}
+function refreshSummary() {
+  const lines = summaryLines();
+  $('#count').textContent = lines.length;
+  $('#summary').replaceChildren(...(lines.length ? lines.map(l => el('li', { text: l })) : [el('li', { text: 'No changes yet.' })]));
+  if ($('#tab-finish').classList.contains('on')) $('#json').value = JSON.stringify(exportData(), null, 2);
+}
+$('#note').value = state.note;
+$('#note').addEventListener('input', e => { state.note = e.target.value; save(); });
+$('#copy').addEventListener('click', async () => {
+  const txt = 'Apply these design tweaks:\n```json\n' + JSON.stringify(exportData(), null, 2) + '\n```';
+  try { await navigator.clipboard.writeText(txt); toast('Copied. Paste it in the chat with Claude.'); }
+  catch (e) { const t = $('#json'); t.closest('details').open = true; t.value = txt; t.select(); try { document.execCommand('copy'); toast('Copied. Paste it in the chat with Claude.'); } catch (x) { toast('Select the text below and copy it'); } }
+});
+$('#download').addEventListener('click', () => {
+  const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(exportData(), null, 2)], { type: 'application/json' })), download: 'tweaks.json' });
+  document.body.append(a); a.click(); a.remove();
+});
+$('#reset').addEventListener('click', () => {
+  if (!confirm('Remove all your changes and start over?')) return;
+  state = fresh(); save(); location.reload();
+});
+
+/* ── Start ───────────────────────────────────────────────────────────── */
+$('#subtitle').textContent = `${DATA.page_title} · ${BLOCKS.length} blocks · ${Object.values(ALTS).reduce((n, a) => n + a.length, 0)} other versions ready`;
+const locked = DATA.brand_locked || {};
+$('#lock-colours').hidden = !locked.colors; $('#lock-fonts').hidden = !locked.fonts;
+$('#seed').value = /^#[0-9a-f]{6}$/i.test(ORIG['--md-sys-color-primary'] || '') ? ORIG['--md-sys-color-primary'] : '#1463FF';
+renderPalettes(); renderFonts(); renderBlocks(); refreshSummary();
+frame.addEventListener('load', () => setTimeout(renderPickers, 30), { once: true });
+render();
+})();
+</script>
+</body>
+</html>

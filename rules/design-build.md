@@ -132,12 +132,14 @@ Structure:
   brief.md
   content/plan.md, content/content.json   # from page-content; the designer never edits them
   index.html                              # the page: tokens, block styles, markup, small JS
+  alternates.html, tweak-options.json     # tweak support (5.10); never linked from index.html
+  tweak.html                              # made by scripts/tweakbar.py for the tweak round; never delivered
 ```
 
 Rules:
 - **Start from `templates/page.html`.** Copy it to `<work>/index.html`, set the kit version in the `<!-- Built with create-page vX.Y.Z -->` line, replace the fonts with the design plan's (2 families max, `display=swap`) and paste the color roles from `scripts/m3_scheme.py`.
 - **One token source:** colors (Material roles plus the plan's named colors), type scale, spacing, grid (`--grid-max`, `--grid-gutter`, `--col`), radius and shadows live once as CSS custom properties in the token block at the top of the `<style>`. Block styles use only `var(--...)`; no raw hex, sizes or shadows repeated in blocks.
-- **One section per block:** `<section data-block="M01-B">` (or `header`/`footer` for G blocks) in the order of `plan.md`, with that block's styles grouped and commented by block ID.
+- **One section per block:** `<section data-block="M01-B">` (or `header`/`footer` for G blocks) in the order of `plan.md`, with that block's styles grouped and commented by block ID. Block sections are direct children of `<main>` (no wrappers), so the tweak bar can move, hide and swap them.
 - **Every word comes from `content.json`:** copy each slot into the markup exactly as written, including alt text and labels. Never type, cut or reword copy.
 - **Production-grade HTML and CSS:** semantic elements and landmarks, mobile-first media queries, short readable class names, no dead CSS, no inline `style` attributes, no `!important` outside the reduced-motion rule.
 - **JavaScript:** none by default. Use small inline vanilla JS only where a block needs it (mobile menu, tabs, multi-step form, video dialog), always keyboard accessible, and delete the template's scripts the page does not use. No frameworks or libraries.
@@ -148,3 +150,50 @@ Rules:
 ### 5.9 Quality floor (always, without announcing it)
 
 Responsive from 360px up, visible keyboard focus, `prefers-reduced-motion` respected, WCAG 2.2 AA contrast, 48px touch targets, one `<h1>`, ordered headings, labels on every field, alt text on every image, skip link. Images: the user's photos when given; otherwise placeholder boxes with the right aspect ratio and a label saying what photo goes there. Never use stock photos of real-looking patients presented as actual patients. No third-party tracking scripts.
+
+### 5.10 Tweak support and applying tweaks
+
+The user finishes the design in the tweak round (START-HERE.md 0.7) with `scripts/tweakbar.py`, which wraps `index.html` in a live preview with a tweak bar. The bar reads the token block, so everything in 5.8's "one token source" rule is what makes it work. The designer adds two files next to `index.html` with the build:
+
+**`<work>/alternates.html`: other versions of the planned blocks.** For each planned block that has library variants (M01, M02, M03, M05, M08, M11, M22, M23, M26, M28: A, B and C), build the other variants, at most 2 per block, held to the same standard as the page: the page's tokens, art direction, mobile and ADA rules, and the words from `content.json` exactly. Leave out a slot the content has no words for rather than writing new copy; page-content fills it if the user picks that version. Format:
+
+```html
+<style>
+/* M05-A: image below text */
+.m05a { ... only var(--...) values, scoped by the version's own class ... }
+</style>
+<template data-alt-for="M05-B" data-variant="M05-A" data-label="Image below text">
+  <section data-block="M05-A" class="m05a">...</section>
+</template>
+```
+
+`data-alt-for` is the planned block's ID as it appears in `index.html`; the template holds exactly one `<section data-block>`. Version CSS is scoped to its own class so it cannot change the page. This file does not count toward the page size budget.
+
+**`<work>/tweak-options.json`: palettes and font pairings to try.**
+
+```json
+{
+  "palettes": [{ "name": "Deeper teal", "tokens": { "--md-sys-color-primary": "#..." } }],
+  "fonts": [{ "name": "Fraunces + Figtree", "display": "\"Fraunces\", Georgia, serif", "body": "\"Figtree\", system-ui, sans-serif",
+              "href": "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Figtree:wght@400;600&display=swap" }],
+  "brand_locked": { "colors": false, "fonts": false }
+}
+```
+
+- **Palettes (2 or 3):** each holds the full `:root` colour roles from `scripts/m3_scheme.py`, from another variant of the brand colour (`--variant tonal_spot`, `vibrant`, `content`) or from a second brand or logo colour. When the brief or brand guide fixes the colours, offer only variants of the brand colour and set `brand_locked.colors` to true.
+- **Font pairings (2 or 3):** Google Fonts with `display=swap`, each following 5.5 and avoiding the 5.3 clichés. When the brief names brand fonts, set `brand_locked.fonts` to true and offer pairings only if the brand guide allows a second face; otherwise leave `fonts` empty.
+
+**Applying a `tweaks.json`** (tweak round, after page-content has updated the content files):
+
+- `design.tokens` and `design.scale`: write final values into the token block. Turn the bar's `calc(... * k)` into real values (for example new `clamp()` ends for the type scale), keeping one scale and the 5.5 ranges.
+- `design.palette_seed`: rerun `m3_scheme.py` with that hex and paste its roles (the bar's palette was a close preview). A named palette: copy its roles from `tweak-options.json`.
+- `design.fonts`: replace the Google Fonts link and `--font-display` / `--font-body`; check the new faces against 5.5.
+- `design.pill`, `grid_max_rem`: set `--radius-pill` (or the `.btn` radius) and `--grid-max`.
+- `blocks.backgrounds`: restyle the block with the matching token pair (Plain: surface; Light tint: surface-container-low; Tint: surface-container; Brand colour: primary-container; Dark: inverse-surface) and make sure every element inside keeps AA contrast, including buttons and links.
+- `blocks.variants`: move the version's markup and CSS from `alternates.html` into `index.html` in place of the old block, using the latest `content.json`; then move the replaced block into `alternates.html` so the user can switch back.
+- `blocks.hidden` and `blocks.order`: follow the updated `plan.md` (remove hidden sections and their CSS).
+- `contrast_failures`: keep the user's choice as close as possible and adjust the failing role's tone until it passes; say what changed.
+- Notes: do what they ask when it is design; send anything about words to page-content as a copy change request.
+
+Then refresh `alternates.html` and `tweak-options.json` for any block or setting that changed, so the next tweak page has choices again, and rerun 6.1. Never copy tweak bar code or `data-tw-` attributes into `index.html` (qa.py `tweak_leftovers`).
+

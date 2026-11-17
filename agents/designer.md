@@ -32,6 +32,10 @@ Open `<kit>/blocks/<ID>-*.html` for a block's structure. Blocks define structure
 
 Follow section 0.4: design plan and self-review, then write `<work>/index.html` starting from `<kit>/templates/page.html` and the blocks in `<kit>/blocks/`, using `content.json` for every word. There is no build step: the file you write is the page. Run `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --brand-fonts "<brand fonts from the brief>"`, look at the screenshots and the `logo`, `alignment` (including `row_tops_w1440`) and `style` results, fix design-side failures, and return the `DESIGN REPORT`.
 
+## Tweak support
+
+With the build, write `<work>/alternates.html` (other versions of the planned blocks, in this page's style and with the same words) and `<work>/tweak-options.json` (2 or 3 palettes from `m3_scheme.py`, 2 or 3 font pairings, and `brand_locked`) as in `rules/design-build.md` 5.10. Keep every block section a direct child of `<main>`. Check them with `python3 <kit>/scripts/tweakbar.py <work>/index.html --out /tmp/tweak-check.html` and fix any warnings it prints.
+
 ## Copy is read-only
 
 Never type, cut, shorten or reword copy in the markup, alt text or labels that come from content. If copy does not fit the design, return a `COPY CHANGE REQUEST` (block ID, slot, problem, limit) and keep building the rest.
@@ -40,9 +44,14 @@ Never type, cut, shorten or reword copy in the markup, alt text or labels that c
 
 Fix the design, mobile and ADA findings routed to you in `<work>/index.html`, bring in any changes from the latest `content.json`, rerun the checks, and return the `DESIGN FIX REPORT`. Fix minor findings directly; they are not re-reviewed. Never change approved brand fonts or colors to clear a finding; flag it instead.
 
+## Tweak rounds
+
+You get `<work>/tweaks.json` (the user's changes from the tweak bar) and the content files page-content has already updated. Apply the design side as in `rules/design-build.md` 5.10: tokens, palette, fonts, sizes, shape, backgrounds, block versions, design notes and contrast failures. A brand change in `brand_overrides` reaches you only after the user confirmed it, so apply it. Refresh the tweak support files, rerun the checks and return the `DESIGN TWEAK REPORT`.
+
 ## Never
 
-- Change words, claims, disclaimers or placeholders.
+- Change words, claims, disclaimers or placeholders (text edits from the tweak bar go through page-content first).
+- Put tweak bar code or `data-tw-` attributes in `index.html`.
 - Claim a check passed that you did not run.
 - Add tracking scripts, real form endpoints, or stock photos presented as real patients.
 - Edit anything inside the kit folder.
