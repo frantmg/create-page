@@ -8,7 +8,9 @@ Owned by page-content when the user asked for written content; with placeholder 
 
 These are the Macallan blocks. They define **structure and content**, not styling. Styling always comes from the art direction in section 5. Use the block IDs in your plan and as `data-block` attributes in the HTML.
 
-Each block's structure and content slots are in `blocks-lite/` (for example `blocks-lite/M01-Home-hero-B.html`, about 1 to 2 KB each): read these. The original demo files in `blocks/` are the visual reference only (large, with demo styling); `scripts/wireframe.py` uses them. `scripts/blocks_lite.py` rebuilds `blocks-lite/` whenever `blocks/` changes. Styling always comes from `rules/design-build.md`.
+Each block's structure and content slots are in `blocks-lite/` (for example `blocks-lite/M01-Home-hero-B.html`, about 1 to 2 KB each): read these. The original demo files in `blocks/` are the visual reference only (large, with demo styling); `scripts/wireframe.py` uses them. `scripts/blocks_lite.py` rebuilds `blocks-lite/` whenever `blocks/` changes.
+
+**Engine blocks (kit v7):** LP (landing header and footer), M01-A, M01-B, M05-A, M05-B, M09, M10, M11-A, M25, M26-A, M28-A, M28-B, M29, M31 are designed, tested blocks in `engine/blocks/` that `scripts/assemble.py` builds in seconds. Prefer them when planning: a landing page built only from engine blocks is on screen in about a minute after the intake. Other blocks are built by page-designer. Styling always comes from `rules/design-build.md`.
 
 The eyebrows, tags and meta lines in the original blocks are optional. Keep one only when it tells the reader something the heading does not; omit it when it merely repeats the heading. Uppercase with wider tracking is allowed only for short labels, used selectively and following the brand's capitalization conventions.
 

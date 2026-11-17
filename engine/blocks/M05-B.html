@@ -1,0 +1,27 @@
+<!--meta {"id": "M05-B", "name": "Image + text, text left, tinted", "slots": {"eyebrow": "opt", "h2": "headline:6", "text": "para:2", "text2": "para:1", "link": "global:cta_primary", "image_brief": "image:Photo: what the first visit looks like, 4:3"}} -->
+<style>
+.m05b { padding: var(--space-5) 0; background: var(--tint-low); }
+.m05b .grid { row-gap: var(--space-4); align-items: center; }
+.m05b .photo { position: relative; aspect-ratio: 4 / 3; }
+.m05b .text > p { margin-top: var(--space-2); color: var(--md-sys-color-on-surface-variant); }
+.m05b .text-link { margin-top: var(--space-2); }
+@media (min-width: 900px) {
+  .m05b { padding: var(--space-6) 0; }
+  .m05b .text { grid-column: 1 / span 5; }
+  .m05b .photo { grid-column: 7 / -1; }
+}
+</style>
+<template>
+<section data-block="{{_block}}" class="m05b" aria-labelledby="{{_id}}-h">
+  <div class="container grid">
+    <div class="text">
+      {{#eyebrow}}<span class="eyebrow">{{eyebrow}}</span>{{/eyebrow}}
+      <h2 id="{{_id}}-h">{{h2}}</h2>
+      <p>{{text}}</p>
+      {{#text2}}<p>{{text2}}</p>{{/text2}}
+      <a class="text-link" href="{{cta_href}}">{{link}}</a>
+    </div>
+    {{{_photo}}}
+  </div>
+</section>
+</template>

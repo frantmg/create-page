@@ -35,7 +35,7 @@ PROBE="""() => {
 # headings when there are no paragraphs).
 ALIGN=r"""() => {
  const SEL='h1,h2,h3,h4,p,img,video,picture,figure,svg[role="img"],form,blockquote,table,ul,ol,.btn,button,input,select,textarea';
- const vis=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>=24&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&parseFloat(s.opacity)>0};
+ const vis=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);if(e.closest('details:not([open])')&&!e.closest('summary'))return false;return r.width>=24&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&parseFloat(s.opacity)>0};
  const floating=e=>{for(let x=e;x&&x!==document.body;x=x.parentElement){const p=getComputedStyle(x).position;if(p==='fixed'||p==='sticky')return true}return false};
  const sy=window.scrollY, name=e=>{const t=(e.innerText||e.getAttribute('alt')||e.getAttribute('aria-label')||'').trim().replace(/\s+/g,' ').slice(0,30);return e.tagName.toLowerCase()+(e.className&&typeof e.className==='string'?'.'+e.className.trim().split(/\s+/)[0]:'')+(t?' "'+t+'"':'')};
  const box=e=>{const r=e.getBoundingClientRect();return {l:r.left,r:r.right,t:r.top+sy,b:r.bottom+sy}};

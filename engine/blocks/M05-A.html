@@ -1,0 +1,27 @@
+<!--meta {"id": "M05-A", "name": "Image + text, image left", "slots": {"eyebrow": "opt", "h2": "headline:7", "text": "para:2", "bullets": "list:2:5", "link": "global:cta_primary", "image_brief": "image:Photo: provider talking with a patient, 4:5"}} -->
+<style>
+.m05a { padding: var(--space-5) 0; }
+.m05a .grid { row-gap: var(--space-4); align-items: center; }
+.m05a .photo { position: relative; aspect-ratio: 4 / 3; }
+.m05a .text > p { margin-top: var(--space-2); color: var(--md-sys-color-on-surface-variant); }
+.m05a .checks { margin-bottom: var(--space-2); max-width: var(--measure); }
+@media (min-width: 900px) {
+  .m05a { padding: var(--space-6) 0; }
+  .m05a .photo { grid-column: 1 / span 5; aspect-ratio: 4 / 5; }
+  .m05a .text { grid-column: 7 / -1; }
+}
+</style>
+<template>
+<section data-block="{{_block}}" class="m05a" aria-labelledby="{{_id}}-h">
+  <div class="container grid">
+    {{{_photo}}}
+    <div class="text">
+      {{#eyebrow}}<span class="eyebrow">{{eyebrow}}</span>{{/eyebrow}}
+      <h2 id="{{_id}}-h">{{h2}}</h2>
+      <p>{{text}}</p>
+      {{#bullets.0}}<ul class="checks">{{#bullets}}<li>{{{_check}}}{{.}}</li>{{/bullets}}</ul>{{/bullets.0}}
+      <a class="text-link" href="{{cta_href}}">{{link}}</a>
+    </div>
+  </div>
+</section>
+</template>

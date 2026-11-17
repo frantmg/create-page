@@ -1,0 +1,36 @@
+<!--meta {"id": "LP-footer", "name": "Landing footer (legal links, disclaimer)", "slots": {"disclaimer": "fixed:[Medical disclaimer supplied by the practice.]", "address": "fixed:[Street address], [City], [State] [ZIP]"}} -->
+<style>
+.lp-foot { padding: var(--space-5) 0 var(--space-3); }
+.lp-foot:not(.band-dark) { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }
+.lp-foot .grid { row-gap: var(--space-3); }
+.lp-foot .note, .lp-foot .meta { font-size: var(--text-caption); }
+.lp-foot .meta { margin-top: var(--space-1); }
+.legal-links { display: flex; flex-wrap: wrap; column-gap: var(--space-3); list-style: none; margin: 0; padding: 0; font-size: var(--text-caption); }
+.legal-links a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; color: inherit; }
+.lp-foot .base { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-2); border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+.lp-foot :focus-visible { outline-color: currentColor; }
+@media (min-width: 900px) { .lp-foot .brand { grid-column: 1 / span 4; } .lp-foot .note { grid-column: 6 / -1; } }
+</style>
+<template>
+<footer class="lp-foot {{footer_class}}" data-block="LP-footer">
+  <div class="container grid">
+    <div class="brand">
+      <a class="wordmark" href="#main" aria-label="{{practice}} home">{{{brand_footer}}}</a>
+      <p class="meta">{{address}}<br>{{phone}}</p>
+    </div>
+    <p class="note">{{disclaimer}}</p>
+  </div>
+  <div class="container base">
+    <span class="meta">&copy; {{year}} {{practice}}</span>
+    <nav aria-label="Legal">
+      <ul class="legal-links">
+        <li><a href="#">Privacy policy</a></li>
+        <li><a href="#">Notice of privacy practices</a></li>
+        <li><a href="#">Accessibility</a></li>
+        <li><a href="#">Non-discrimination notice</a></li>
+        <li><a href="#">Terms</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>
+</template>

@@ -46,6 +46,10 @@ Logo: <embedded image or text wordmark; light or dark; the background it sits on
 Flags: <font, asset or brand issues you could not resolve>
 ```
 
+## Engine pages (kit v7)
+
+Most pages are assembled by `scripts/assemble.py` from `engine/` (`rules/design-build.md` 5.11). On an engine page you are asked only for what the engine does not have: blocks it lists under `needs_designer` (a dashed placeholder section marks each spot), replaced or added library blocks from the tweak bar, notes, and contrast or QA fixes. Build those in the page's own engine style: reuse `engine/base.css` parts (`.btn`, `.checks`, `.photo`, `.field`, `.eyebrow`) and the theme variables (`--hero-*`, `--radius-*`, `--tint-low` and so on) instead of new values, scope the CSS to a block class, wrap it in block CSS markers, and use targeted edits. Never restyle the engine's own blocks on a page; a fix that belongs in the engine is reported as a flag so it is fixed once for every page.
+
 ## Tweak support (a separate, background request)
 
 After your build the orchestrator asks for the tweak support files while the user is already looking at the page: write `<work>/alternates.html` (other versions of the planned blocks, each version's CSS in its own `<style data-variant="ID">`) and `<work>/tweak-options.json` (2 or 3 palettes from `m3_scheme.py`, 2 or 3 font pairings, `brand_locked`) as in `rules/design-build.md` 5.10. **Never change `index.html` in this request** (the user may be tweaking it). Check with `python3 <kit>/scripts/tweakbar.py <work>/index.html --out /tmp/tweak-check.html`, fix any warnings, and return:

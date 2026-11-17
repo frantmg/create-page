@@ -1,0 +1,26 @@
+<!--meta {"id": "M31", "name": "FAQ accordion", "slots": {"h2": "question:4", "faqs": "items:4:q=question:6;a=para:2", "image_brief": "image:Photo: the clinic's treatment space, 4:5"}} -->
+<style>
+.m31 { padding: var(--space-5) 0; }
+.m31 .grid { row-gap: var(--space-4); align-items: start; }
+.m31 .photo { position: relative; aspect-ratio: 4 / 3; }
+.m31 h2 { margin-bottom: var(--space-3); }
+.m31 details { border-top: 1px solid var(--md-sys-color-outline-variant); }
+.m31 details:last-of-type { border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.m31 summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); min-height: 48px; padding: var(--space-3) 0; font-family: var(--font-display); font-stretch: var(--display-stretch); font-weight: 600; font-size: var(--text-h4); cursor: pointer; list-style: none; }
+.m31 summary::-webkit-details-marker { display: none; }
+.m31 summary::after { content: "+"; flex: none; font-size: var(--text-h3); color: var(--md-sys-color-primary); }
+.m31 details[open] summary::after { content: "\2212"; }
+.m31 details p { padding-bottom: var(--space-3); color: var(--md-sys-color-on-surface-variant); }
+@media (min-width: 900px) { .m31 { padding: var(--space-6) 0; } .m31 .photo { grid-column: 1 / span 4; aspect-ratio: 4 / 5; } .m31 .list { grid-column: 6 / -1; } }
+</style>
+<template>
+<section data-block="{{_block}}" class="m31" aria-labelledby="{{_id}}-h">
+  <div class="container grid">
+    {{{_photo}}}
+    <div class="list">
+      <h2 id="{{_id}}-h">{{h2}}</h2>
+      {{#faqs}}<details><summary>{{q}}</summary><p>{{a}}</p></details>{{/faqs}}
+    </div>
+  </div>
+</section>
+</template>

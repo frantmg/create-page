@@ -192,3 +192,13 @@ The user finishes the design in the tweak round (START-HERE.md 0.7) with `script
 
 Then refresh `alternates.html` and `tweak-options.json` for any block or setting that changed, so the next tweak page has choices again, and rerun 6.1. Never copy tweak bar code or `data-tw-` attributes into `index.html` (qa.py `tweak_leftovers`).
 
+### 5.11 The engine (kit v7)
+
+The engine (`engine/`) holds this section's rules as finished parts, so most pages are assembled, not hand-written:
+
+- `engine/base.css`: the type scale, spacing, grid and shared parts (buttons, fields, checks, photo placeholders, grain), all on tokens.
+- `engine/themes/<name>.css` + `.json`: an art direction (fonts, shapes, the hero and band treatments, ornament, accents) as variables only, with a description that says which practices it suits. The theme variables are the contract: `--display-stretch`, `--display-weight`, `--heading-tracking`, `--h1-tracking`, `--radius-cta`, `--radius-media`, `--radius-card`, `--radius-field`, `--eyebrow-color`, `--eyebrow-tracking`, `--hero-*`, `--final-*`, `--story-*`, `--num-color`, `--rule`, `--steps-bg`, `--tint-low`, `--photo-bg`, `--photo-fg`, `--header-bg`, `--header-line`, `--stat-big`, `--ornament-opacity`. Brand tones come from the seed as `--tone-10` to `--tone-95`.
+- `engine/blocks/<ID>.html`: one block each: a `<!--meta {id, name, slots}-->` line (slot names and the lorem rule for each), its CSS scoped to the block's own class and using only tokens and theme variables, and its markup as a small template (`{{slot}}`, `{{#list}}...{{/list}}`).
+- `scripts/assemble.py` builds the page from `build.json`; the orchestrator's creative decisions (theme, seed, fonts, ornament, shapes, logo, an optional small signature CSS) make each page this practice's own.
+
+Engine blocks follow every rule in this section (asymmetry, aligned rows, the type scale, AA contrast, 48px targets, reduced motion, no clichés). **Every change to a block or a theme must pass `python3 <kit>/scripts/engine_check.py`** (every block, every theme, all five widths, axe, alignment, logo, focus) before release. A page's signature CSS (`extra_css`) changes the look only through tokens and theme variables and stays small; anything bigger is a new theme or block. Engine-built pages are edited like any other page (targeted edits, block CSS markers).

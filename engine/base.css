@@ -1,0 +1,99 @@
+/* ── Engine base: type, spacing, grid and shared parts. Colours and the look come from the theme layer. ── */
+:root {
+  --state-hover: 0.08;
+  --state-focus: 0.10;
+  --state-pressed: 0.10;
+  --text-h1: clamp(2.25rem, 1.6rem + 2.8vw, 3.75rem);
+  --text-h2: clamp(1.875rem, 1.55rem + 1.2vw, 2.5rem);
+  --text-h3: clamp(1.3125rem, 1.25rem + 0.3vw, 1.5rem);
+  --text-h4: 1.1875rem;
+  --text-lead: clamp(1.125rem, 1.08rem + 0.2vw, 1.25rem);
+  --text-body: clamp(1.0625rem, 1.04rem + 0.1vw, 1.125rem);
+  --text-eyebrow: 0.8125rem;
+  --text-caption: 0.875rem;
+  --text-button: 1rem;
+  --lh-tight: 1.08;
+  --lh-heading: 1.2;
+  --lh-body: 1.6;
+  --measure: 62ch;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+  --grid-max: 76rem;
+  --grid-gutter: clamp(1.25rem, 4vw, 2.5rem);
+  --grid-width: min(100vw - 2 * var(--grid-gutter), var(--grid-max));
+  --col: calc((var(--grid-width) - 11 * var(--grid-gutter)) / 12);
+  --bleed: var(--grid-gutter);
+  --overlap: 4rem;
+  --radius-s: 4px;
+  --radius-m: 12px;
+  --radius-l: 28px;
+  --radius-pill: 999px;
+  --shadow-soft: 0 12px 32px -8px rgb(var(--ink) / 0.08);
+  --shadow-raised: 0 18px 48px -12px rgb(var(--ink) / 0.10);
+  --shadow-float: 0 24px 64px -16px rgb(var(--ink) / 0.12);
+  --focus-ring: 3px solid var(--md-sys-color-primary);
+  --header-h: 72px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--font-body); font-size: var(--text-body); line-height: var(--lh-body); color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface); }
+img, svg, video { display: block; max-width: 100%; height: auto; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-stretch: var(--display-stretch); font-weight: var(--display-weight); line-height: var(--lh-heading); letter-spacing: var(--heading-tracking); margin: 0; text-wrap: balance; }
+h1 { font-size: var(--text-h1); line-height: var(--lh-tight); letter-spacing: var(--h1-tracking); }
+h2 { font-size: var(--text-h2); }
+h3 { font-size: var(--text-h3); }
+h4 { font-size: var(--text-h4); }
+p { margin: 0; max-width: var(--measure); text-wrap: pretty; }
+a { color: var(--md-sys-color-primary); text-underline-offset: 0.15em; }
+input, select, textarea, button { font: inherit; font-size: max(16px, 1em); }
+.container { width: min(100% - 2 * var(--grid-gutter), var(--grid-max)); margin-inline: auto; }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--grid-gutter); }
+.grid > * { grid-column: 1 / -1; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip-link { position: absolute; left: var(--space-2); top: -100px; z-index: 100; display: inline-flex; align-items: center; min-height: 48px; padding: 0 var(--space-2); background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface); border-radius: var(--radius-s); }
+.skip-link:focus { top: var(--space-2); }
+:focus-visible { outline: var(--focus-ring); outline-offset: 3px; border-radius: var(--radius-s); }
+
+/* Buttons with a Material state layer; the shape comes from the theme */
+.btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: 56px; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-cta); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-family: var(--font-display); font-stretch: var(--display-stretch); font-size: var(--text-button); font-weight: 600; text-decoration: none; cursor: pointer; overflow: hidden; }
+.btn::after { content: ""; position: absolute; inset: 0; z-index: -1; background: currentColor; opacity: 0; transition: opacity .15s; }
+.btn:hover::after { opacity: var(--state-hover); }
+.btn:focus-visible::after { opacity: var(--state-focus); }
+.btn:active::after { opacity: var(--state-pressed); }
+.btn-ghost { background: transparent; color: inherit; box-shadow: inset 0 0 0 2px currentColor; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.actions .btn { flex: 1 1 auto; }
+@media (min-width: 900px) { .actions .btn { flex: 0 0 auto; } }
+.text-link { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 48px; font-family: var(--font-display); font-stretch: var(--display-stretch); font-weight: 600; text-decoration-thickness: 2px; }
+
+/* Logo */
+.wordmark { display: inline-flex; flex-direction: column; justify-content: center; min-height: 48px; font-family: var(--font-display); font-stretch: var(--display-stretch); font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; color: inherit; text-decoration: none; }
+.wordmark span + span { font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.01em; margin-top: 0.2em; }
+.logo { display: block; height: 40px; width: auto; max-width: 220px; object-fit: contain; }
+.band-dark { background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface); }
+.band-dark a { color: inherit; }
+
+/* Shared parts */
+.eyebrow { display: block; margin-bottom: var(--space-2); font-family: var(--font-display); font-stretch: var(--display-stretch); font-size: var(--text-eyebrow); font-weight: 600; letter-spacing: var(--eyebrow-tracking); color: var(--eyebrow-color); }
+.checks { list-style: none; margin: var(--space-3) 0; padding: 0; display: grid; gap: var(--space-1); }
+.checks li { display: flex; align-items: center; gap: var(--space-1); }
+.checks svg { width: 20px; height: 20px; flex: none; color: var(--check-color, var(--md-sys-color-primary)); }
+.photo { display: flex; align-items: flex-end; padding: var(--space-3); background: var(--photo-bg); color: var(--photo-fg); font-size: var(--text-caption); border-radius: var(--radius-media); }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.grain { position: relative; isolation: isolate; }
+.grain::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: var(--grain, .12); pointer-events: none; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.field { display: grid; gap: var(--space-1); }
+.field label { font-family: var(--font-display); font-stretch: var(--display-stretch); font-weight: 600; font-size: var(--text-caption); }
+.field label span { font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
+.field input, .field select { width: 100%; min-height: 52px; padding: 0 var(--space-2); border: 1.5px solid var(--md-sys-color-outline); border-radius: var(--radius-field); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
+.field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: var(--space-5); }
+.field input:focus-visible, .field select:focus-visible { outline: var(--focus-ring); outline-offset: 1px; border-color: var(--md-sys-color-primary); }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

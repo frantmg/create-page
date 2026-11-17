@@ -12,7 +12,8 @@ Every page agent reads this file and its own role file (`agents/content.md`, `ag
 | 5 (5.1 to 5.10) | `rules/design-build.md` |
 | 6 (6.1 to 6.3) | `rules/qa.md` |
 | Blocks | `blocks-lite/<ID>-*.html`: each block's structure and content slots (about 1 to 2 KB). Read these. `blocks/` holds the large visual demos; open one only when you need to see a layout. |
-| Page starter | `templates/page.html` |
+| Engine | `engine/` (designed blocks, themes, base) built by `scripts/assemble.py`; most pages are assembled, not hand-written (`rules/design-build.md` 5.11) |
+| Page starter | `templates/page.html` (classic, hand-built pages) |
 | Scripts | `scripts/readability.py`, `m3_scheme.py`, `logo.py`, `qa.py`, `tweakbar.py`; axe-core is bundled at `scripts/vendor/axe.min.js` |
 
 Run scripts as `python3 <kit>/scripts/<name>.py` with absolute paths.

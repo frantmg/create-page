@@ -1,0 +1,47 @@
+/* Theme: editorial. Expanded grotesk headings over a serif body, a deep brand-gradient hero with grain and a
+   drawn ornament, asymmetric "leaf" shapes on buttons and media, a strong brand band for proof. */
+:root {
+  --display-stretch: 112%;
+  --display-weight: 600;
+  --heading-tracking: -0.015em;
+  --h1-tracking: -0.025em;
+  --radius-cta: 22px 4px 22px 4px;
+  --radius-media: 4px 120px 4px 4px;
+  --radius-card: 28px 4px 28px 28px;
+  --radius-field: 12px 4px 12px 12px;
+  --eyebrow-color: var(--md-sys-color-primary);
+  --eyebrow-tracking: 0.02em;
+  --hero-bg: linear-gradient(135deg, var(--tone-10) 0%, var(--tone-20) 45%, var(--tone-40) 100%);
+  --hero-fg: var(--md-sys-color-on-primary);
+  --hero-muted: var(--md-sys-color-inverse-on-surface);
+  --hero-accent: var(--tone-90);
+  --hero-line: color-mix(in srgb, var(--tone-90) 30%, transparent);
+  --hero-btn-bg: var(--tone-90);
+  --hero-btn-fg: var(--tone-10);
+  --hero-focus: var(--tone-90);
+  --hero-photo-bg: var(--md-sys-color-primary-container);
+  --hero-photo-fg: var(--md-sys-color-on-primary-container);
+  --hero-grain: .12;
+  --ornament-opacity: .35;
+  --final-bg: linear-gradient(120deg, var(--tone-40) 0%, var(--tone-20) 60%, var(--tone-10) 100%);
+  --final-fg: var(--md-sys-color-on-primary);
+  --final-muted: var(--md-sys-color-inverse-on-surface);
+  --final-btn-bg: var(--tone-90);
+  --final-btn-fg: var(--tone-10);
+  --final-focus: var(--tone-90);
+  --story-bg: var(--md-sys-color-primary);
+  --story-fg: var(--md-sys-color-on-primary);
+  --story-accent: var(--tone-80);
+  --story-muted: var(--md-sys-color-inverse-on-surface);
+  --story-small: var(--tone-90);
+  --story-focus: var(--tone-90);
+  --num-color: var(--md-sys-color-tertiary);
+  --rule: var(--md-sys-color-secondary-container);
+  --steps-bg: var(--md-sys-color-surface-container);
+  --tint-low: var(--md-sys-color-surface-container-low);
+  --photo-bg: var(--md-sys-color-secondary-container);
+  --photo-fg: var(--md-sys-color-on-surface-variant);
+  --header-bg: var(--md-sys-color-surface);
+  --header-line: 0 1px 0 var(--md-sys-color-outline-variant);
+  --stat-big: var(--md-sys-color-primary);
+}

@@ -1,0 +1,32 @@
+<!--meta {"id": "M01-A", "name": "Home hero, full photo with dark overlay", "slots": {"eyebrow": "label:3", "h1": "headline:6", "who": "sentence:12", "image_brief": "image:Photo: provider with a patient in the clinic, wide"}} -->
+<style>
+.m01a { position: relative; isolation: isolate; display: grid; align-items: end; min-height: min(86vh, 46rem); color: var(--md-sys-color-on-primary); }
+.m01a .photo { position: absolute; inset: 0; z-index: -2; border-radius: 0; align-items: flex-start; justify-content: flex-end; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.m01a::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, var(--tone-10) 0%, color-mix(in srgb, var(--tone-10) 82%, transparent) 42%, transparent 88%); }
+.m01a :focus-visible { outline-color: var(--tone-90); }
+.m01a .copy { padding: var(--space-6) 0 var(--space-5); }
+.m01a .eyebrow { color: var(--tone-90); }
+.m01a .who { margin: var(--space-2) 0 var(--space-4); font-size: var(--text-lead); color: var(--md-sys-color-inverse-on-surface); max-width: none; }
+.m01a .btn-light { background: var(--tone-90); color: var(--tone-10); }
+.m01a .copy { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+@media (min-width: 900px) {
+  .m01a::before { background: linear-gradient(90deg, var(--tone-10) 0%, color-mix(in srgb, var(--tone-10) 78%, transparent) 46%, transparent 80%); }
+  .m01a .copy { grid-column: 1 / span 6; padding-bottom: var(--space-6); }
+}
+</style>
+<template>
+<section data-block="{{_block}}" class="m01a" aria-labelledby="{{_id}}-h">
+  {{{_photo}}}
+  <div class="container grid">
+    <div class="copy">
+      {{#eyebrow}}<span class="eyebrow">{{eyebrow}}</span>{{/eyebrow}}
+      <h1 id="{{_id}}-h">{{h1}}</h1>
+      <p class="who">{{who}}</p>
+      <div class="actions">
+        <a class="btn btn-light" href="{{cta_href}}">{{cta_primary}}</a>
+        <a class="btn btn-ghost" href="{{tel}}">{{cta_secondary}}</a>
+      </div>
+    </div>
+  </div>
+</section>
+</template>

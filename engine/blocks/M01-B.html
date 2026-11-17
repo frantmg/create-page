@@ -1,0 +1,39 @@
+<!--meta {"id": "M01-B", "name": "Home hero, split text/photo", "slots": {"eyebrow": "label:3", "h1": "headline:6", "who": "sentence:9", "bullets": "list:3:4", "proof": "stats:3:3", "image_brief": "image:Photo: provider with a patient, 4:5"}} -->
+<style>
+.m01b { position: relative; z-index: 2; color: var(--hero-fg); background: var(--hero-bg); --check-color: var(--hero-accent); --grain: var(--hero-grain); }
+.m01b::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ornament) right bottom / 900px auto no-repeat; opacity: var(--ornament-opacity); pointer-events: none; }
+.m01b :focus-visible { outline-color: var(--hero-focus); }
+.m01b .grid { padding-top: var(--space-4); row-gap: var(--space-4); }
+.m01b .eyebrow { color: var(--hero-accent); }
+.m01b h1 { max-width: 13ch; }
+.m01b .who { max-width: none; margin-top: var(--space-2); font-size: var(--text-lead); color: var(--hero-muted); }
+.m01b .btn-hero { background: var(--hero-btn-bg); color: var(--hero-btn-fg); }
+.m01b .proof { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--hero-line); font-size: var(--text-caption); color: var(--hero-muted); }
+.m01b .proof b { display: block; font-family: var(--font-display); font-stretch: var(--display-stretch); font-size: var(--text-h3); color: var(--hero-fg); }
+.m01b .photo { position: relative; aspect-ratio: 4 / 3; margin-right: calc(-1 * var(--bleed)); background: var(--hero-photo-bg); color: var(--hero-photo-fg); border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.m01b .copy, .m01b .photo { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+.m01b .photo { animation-delay: .12s; }
+@media (min-width: 900px) {
+  .m01b .grid { padding-top: var(--space-5); padding-bottom: var(--space-5); align-items: start; }
+  .m01b .copy { grid-column: 1 / span 7; }
+  .m01b .photo { grid-column: 8 / -1; align-self: stretch; aspect-ratio: auto; min-height: 32rem; margin-bottom: calc(-1 * var(--space-5)); border-bottom-left-radius: 0; }
+}
+</style>
+<template>
+<section data-block="{{_block}}" class="m01b grain" aria-labelledby="{{_id}}-h">
+  <div class="container grid">
+    <div class="copy">
+      {{#eyebrow}}<span class="eyebrow">{{eyebrow}}</span>{{/eyebrow}}
+      <h1 id="{{_id}}-h">{{h1}}</h1>
+      <p class="who">{{who}}</p>
+      {{#bullets.0}}<ul class="checks">{{#bullets}}<li>{{{_check}}}{{.}}</li>{{/bullets}}</ul>{{/bullets.0}}
+      <div class="actions">
+        <a class="btn btn-hero" href="{{cta_href}}">{{cta_primary}}</a>
+        <a class="btn btn-ghost" href="{{tel}}">{{cta_secondary}}</a>
+      </div>
+      {{#proof.0}}<div class="proof">{{#proof}}<span><b>{{value}}</b>{{label}}</span>{{/proof}}</div>{{/proof.0}}
+    </div>
+    {{{_photo}}}
+  </div>
+</section>
+</template>

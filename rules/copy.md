@@ -60,7 +60,7 @@ page-content writes two files in `<work>/content/`:
 }
 ```
 
-Slot names follow the block's content slots in 3.1 (headline, bullets, steps, faq items, and so on; `blocks-lite/` shows each block's slots in place). Image needs go in `image_brief` slots so the designer knows what each photo should show, plus an `alt` slot per meaningful image. Run `python3 <kit>/scripts/readability.py <work>/content/content.json` (add `--allow` for real medical terms and the keyword) and fix every block marked `FIX` before the designer starts.
+Slot names: for engine blocks, use exactly the slot names in the `<!--meta ...-->` line of `engine/blocks/<ID>.html` (for example M01-B: `eyebrow`, `h1`, `who`, `bullets`, `proof` [{value, label}], `image_brief`); `scripts/assemble.py` matches `content.json` blocks to the plan by ID and order, and fills any missing slot with lorem. For other blocks, slot names follow the block's content slots in 3.1 (`blocks-lite/` shows them in place). Image needs go in `image_brief` slots so the designer knows what each photo should show, plus an `alt` slot per meaningful image. Run `python3 <kit>/scripts/readability.py <work>/content/content.json` (add `--allow` for real medical terms and the keyword) and fix every block marked `FIX` before the designer starts.
 
 ### 4.2 Placeholder content (lorem ipsum)
 
