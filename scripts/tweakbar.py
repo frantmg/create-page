@@ -7,7 +7,8 @@ The tweak bar lets the user try palettes, a new main colour, single colour token
 check), font pairings or any Google font, heading and body size, spacing, corners, shadows, page width and button
 shape; and per block: move, hide, swap to another version, replace it with any block from the library or add a library
 block below it (shown as a marked spot, built by the designer when the changes come back), change the background,
-edit text and leave notes.
+edit text and leave notes; per element (Select element): colour, background, size, weight, alignment, spacing, width
+and corners from the page's own tokens, hide, replace a photo, pin a comment; undo and redo for everything.
 "Finish" exports every change as tweaks.json (copy or download) for the orchestrator to route (START-HERE.md 0.7).
 
 Inputs next to index.html are picked up automatically when present:

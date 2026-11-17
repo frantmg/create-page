@@ -10,8 +10,10 @@ blocks (removed with their CSS), block versions from alternates.html (markup and
 replaced block moves into alternates.html so the user can switch back), block backgrounds (band-* classes on the
 token pairs), and text edits: an edit's "final" text (set by page-content), or its "after" text with --copy-as-written
 (the user's words exactly as typed).
-Leaves for page-designer (listed under needs_designer): replaced and added library blocks, notes, contrast failures,
-block versions without CSS, and text edits with no final text.
+Also element changes from "Select element" (only the page's own tokens; written as a class per element in a
+/* block:element-tweaks */ group), and photos (embedded as compressed data URIs, with the user's alt text).
+Leaves for page-designer (listed under needs_designer): replaced and added library blocks, notes, pinned comments,
+contrast failures, photos the user will attach in the chat, block versions without CSS, and text edits with no final text.
 Block CSS is moved or removed only when it sits between /* block:ID */ and /* /block:ID */ markers (design-build 5.8).
 Refuses when tweaks.json was made on another version of the page (page_hash), unless --force.
 Writes index.html and alternates.html in place (copies go to <work>/backups/ first) and prints a JSON report.
@@ -34,6 +36,12 @@ if tw.get("page_hash") and tw["page_hash"] != hashlib.sha1(src).hexdigest()[:12]
                          "Rebuild the tweak page and ask again, or rerun with --force."}))
 
 seed_tokens, warnings = {}, []
+import base64, mimetypes
+for img in tw.get("images") or []:   # photos saved by tweakserve as files: embed them as data URIs
+    isrc = str(img.get("src", ""))
+    if isrc and not isrc.startswith("data:") and (work / isrc).is_file():
+        mime = mimetypes.guess_type(isrc)[0] or "image/webp"
+        img["src"] = f"data:{mime};base64," + base64.b64encode((work / isrc).read_bytes()).decode()
 seed = ((tw.get("design") or {}).get("palette_seed") or "").strip()
 if seed:
     r = subprocess.run([sys.executable, str(KIT / "scripts" / "m3_scheme.py"), seed], capture_output=True, text=True)
@@ -152,6 +160,41 @@ JS = r"""
     if (!node || node === e) { R.skipped.push(`text edit in ${c.block}: element not found`); continue; }
     node.textContent = text; R.applied.push(`text ${c.block} ${c.element}: "${text}"`);
   }
+
+  // 3f. Element changes, photos and pinned comments (paths are relative to the block, as recorded in the tweak bar)
+  const elNode = x => {
+    const e = map.get(x.block), cur = (blocks.variants || {})[x.block] || null;
+    if (!e || (x.variant || null) !== cur) { R.skipped.push(`${x.element} in ${x.block}: block or version changed`); return null; }
+    const n = byPath(e, x.path || []); if (!n) { R.skipped.push(`${x.element} in ${x.block}: element not found`); return null; }
+    return n;
+  };
+  const cls = x => x.class || ('x-' + String(x.block).toLowerCase().replace(/[^a-z0-9]+/g, '') + '-' + ((x.path || []).join('-') || 'root'));
+  const old = cutBlockCss('element-tweaks');
+  const rules = new Map((old || '').split('\n').filter(l => /^\.[\w-]+/.test(l)).map(l => [l.split(' {')[0], l]));
+  const safe = v => /^[\w\s.,()%#-]+$/.test(String(v));
+  const firstBlock = main && [...main.children].find(e => e.hasAttribute('data-block'));
+  for (const x of tw.elements || []) {
+    const n = elNode(x); if (!n) continue; const c = cls(x); n.classList.add(c);
+    const decl = Object.entries(x.styles || {}).filter(([p, v]) => /^[a-z-]+$/.test(p) && safe(v)).map(([p, v]) => `${p}: ${v}`);
+    if (decl.length) rules.set(`.${c}.${c}.${c}`, `.${c}.${c}.${c} { ${decl.join('; ')}; }`);
+    R.applied.push(`element ${x.block} ${x.element} ${x.label || ''}: ${decl.join('; ')}`);
+  }
+  for (const x of tw.images || []) {
+    if (!/^data:image\//.test(x.src || '')) { R.needs_designer.push(`Photo for ${x.element} ${x.label || ''} in ${x.block}: the user attaches it in the chat; add it as a compressed WebP (alt: "${x.alt || ''}")`); continue; }
+    const n = elNode(x); if (!n) continue; const c = cls(x);
+    if (n.tagName === 'IMG') { n.setAttribute('src', x.src); n.removeAttribute('srcset'); n.setAttribute('alt', x.alt || ''); }
+    else {
+      n.textContent = ''; n.removeAttribute('role'); n.removeAttribute('aria-label');
+      const i = doc.createElement('img'); i.setAttribute('src', x.src); i.setAttribute('alt', x.alt || '');
+      if (!firstBlock || !firstBlock.contains(n)) i.setAttribute('loading', 'lazy');
+      n.appendChild(i); n.classList.add(c);
+      rules.set(`.${c} > img`, `.${c} > img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }`);
+    }
+    if (!x.alt) R.needs_designer.push(`Photo in ${x.block} has no description: add alt text from content.json or ask page-content`);
+    R.applied.push(`photo ${x.block} ${x.element}`);
+  }
+  if (rules.size) css += `\n/* block:element-tweaks */\n${[...rules.values()].join('\n')}\n/* /block:element-tweaks */\n`;
+  for (const x of tw.comments || []) R.needs_designer.push(`Comment on ${x.element} ${x.label || ''} in ${x.block} (path ${(x.path || []).join('.') || 'block'}): ${x.text}`);
 
   // 3e. Hidden blocks: removed with their CSS
   for (const key of blocks.hidden || []) {

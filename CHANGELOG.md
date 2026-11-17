@@ -2,6 +2,7 @@
 
 Newest first. Versions follow the rules in START-HERE.md section 9.
 
+- **6.2.3** (2026-11-17): Tweak bar editing: select any element and change it within the page's tokens (colour, background, size, weight, alignment, spacing, width, corners, hide), replace photos with your own, pin comments to an element, and undo and redo everything; applied by script, comments and attached photos go to the designer.
 - **6.2.2** (2026-11-17): Faster without changing the design rules: stage timing; setup and website reading in the background during the intake; agents read only their own role files; QA runs once per stage and three reviewers work in parallel; the page is shown before the review finishes (findings held and fixed with the tweaks); edit-only fixes and no re-review for mechanical fixes; content and design in parallel (the designer sets the system while the words are written); a content question (write it, use my document, or lorem); the brand guide always asked and its rules enforced (brand.json, qa.py --brand).
 - **6.2.1** (2026-11-17): Back to the 6.2.0 kit with only the tweak bar improvements kept: live block previews, replace or add a block from the library, one-click Send to Claude, and tweaks applied by script in seconds (the designer only builds new blocks, notes and contrast fixes).
 - **6.2.0** (2026-11-17): New tweak round: after the design is done, the user fine-tunes it in a tweak page (colours, fonts, sizes, shape, block order, block versions, backgrounds, text, notes) and the changes go back through the relay.

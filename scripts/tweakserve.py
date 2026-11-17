@@ -4,12 +4,13 @@ Usage: python3 tweakserve.py <work> [--once] [--open] [--port 8765] [--timeout 3
 
 Serves <work>/tweak.html at http://127.0.0.1:<port>/ (the next free port from --port). The page's "Send to Claude"
 and "Looks good, deliver" buttons POST to /__tweaks: the changes are saved to <work>/tweaks.json (an earlier
-tweaks.json is kept as tweaks-1.json, tweaks-2.json ...), and the script prints one line:
+tweaks.json is kept as tweaks-1.json, tweaks-2.json ...; photos the user added are saved in <work>/materials/uploads/ and
+the change file keeps their paths), and the script prints one line:
   RECEIVED apply <path to tweaks.json>      or      RECEIVED approve
 --once exits right after that line, so an orchestrator running it in the background is woken up by the exit.
 --open opens the page in the default browser. --timeout ends with "TIMEOUT" when nothing arrives in time.
 The page is re-read on every request, so a rebuilt tweak.html shows on refresh. Only 127.0.0.1 is served."""
-import argparse, http.server, json, pathlib, socketserver, sys, threading, webbrowser
+import argparse, base64, http.server, json, pathlib, re, socketserver, sys, threading, webbrowser
 
 ap = argparse.ArgumentParser()
 ap.add_argument("work"); ap.add_argument("--once", action="store_true"); ap.add_argument("--open", action="store_true")
@@ -37,6 +38,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if action == "approve":
             print("RECEIVED approve", flush=True)
         else:
+            up = work / "materials" / "uploads"   # photos from the tweak bar: saved as files, the change file keeps their paths
+            for n, img in enumerate(data.get("images") or [], 1):
+                m = re.match(r"data:image/(\w+);base64,(.*)", str(img.get("src", "")), re.S)
+                if not m: continue
+                up.mkdir(parents=True, exist_ok=True)
+                f = up / f"photo-{n}-{re.sub(r'[^a-z0-9]+', '-', str(img.get('block', 'x')).lower())}.{'jpg' if m.group(1) == 'jpeg' else m.group(1)}"
+                f.write_bytes(base64.b64decode(m.group(2))); img["src"] = str(f.relative_to(work))
             out = work / "tweaks.json"
             if out.exists():
                 n = 1
