@@ -1,6 +1,6 @@
 # Shared rules for the page agents
 
-Every page agent reads this file and its own role file (`agents/content.md`, `agents/designer.md` or `agents/qa.md`), then only the rules its role file lists. `START-HERE.md` is the orchestrator's file; agents do not need it.
+Every page agent reads its own role file (`agents/content.md`, `agents/designer.md` or `agents/qa.md`) and its reading pack (`agents/packs/<role>.md`, which contains this file and the rules for that role, word for word). `START-HERE.md` is the orchestrator's file; agents do not need it. One content agent and one designer serve the whole job; QA reviewers are fresh for every review.
 
 ## Kit map
 

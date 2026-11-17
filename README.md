@@ -36,14 +36,14 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 | `rules/` | Materials, block plan, copy, design and build, QA standards |
 | `agents/` | The three agent roles with their full instructions, plus `shared.md` read by all of them (also in `.claude/agents/` for Claude Code) |
 | `blocks/` | The 47 original block HTML files (structure reference) |
-| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`, `tweakserve.py`, `apply_tweaks.py`), stage timing (`timing.py`), background setup (`setup.py`), website reader (`fetch_site.py`), automated QA (with the brand check) (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
+| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`, `tweakserve.py`, `apply_tweaks.py`), stage timing (`timing.py`), background setup (`setup.py`), website reader (`fetch_site.py`), reading packs (`build_packs.py`), automated QA (with the brand check) (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
 | `templates/page.html` | Starter single-file page: design tokens, skip link, focus styles, small accessible JS |
 | `templates/tweakbar.html` | The tweak bar used by `scripts/tweakbar.py` for the tweak round |
 | `VERSION`, `CHANGELOG.md` | Current version and history |
 
 ## For maintainers: updating the kit
 
-1. Edit the files. Bump the version using `START-HERE.md` section 9 (patch for small fixes, minor for additions, major for changes to how it works).
+1. Edit the files, then run `python3 scripts/build_packs.py` so the agents' reading packs match the rules. Bump the version using `START-HERE.md` section 9 (patch for small fixes, minor for additions, major for changes to how it works).
 2. Update `VERSION` and the version line in `START-HERE.md`, and add a line at the top of `CHANGELOG.md`.
 3. Publish a GitHub release tagged `vX.Y.Z` (for example `v6.0.1`). The loader only uses published release tags, so unreleased edits never reach the team.
 4. Only maintainers can push to this repository or publish releases. Whoever controls it controls what Claude does for the whole team.

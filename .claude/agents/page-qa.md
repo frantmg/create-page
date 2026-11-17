@@ -20,9 +20,10 @@ Nothing else; if you were given another agent's report or notes, ignore them. In
 
 ## Read first
 
-1. `<kit>/agents/shared.md` (kit map, work folder, lanes).
-2. `<kit>/rules/qa.md`: the full QA procedure (6.1 automated checks, 6.2 review areas A to F, 6.3 report format, severity, the mechanical list and the re-review rule).
-3. The standards your areas judge against: `<kit>/rules/copy.md` (A, B), `<kit>/rules/design-build.md` (C, D, E), `<kit>/rules/blocks-and-plan.md` (F, section 3.4) and the priority rule and brand guide section in `<kit>/rules/materials.md`.
+Read `<kit>/agents/packs/qa.md`: one file with, word for word, `agents/shared.md` (kit map, work folder, lanes), `rules/qa.md` (6.1 automated checks, 6.2 review areas A to F, 6.3 report format, severity, the mechanical list and the re-review rule) and the standards your areas judge against: `rules/copy.md` (A, B), `rules/design-build.md` (C, D, E), `rules/blocks-and-plan.md` (F, section 3.4) and `rules/materials.md` (the priority rule and the brand guide section). If the pack is missing, read those files instead.
+
+**Warm-up:** if your first message says *warm-up*, read the pack and your role file now, reply `READY` with nothing else, and stop. The page and your areas arrive in the next message. You are fresh for this one review: you have not seen how the page was made, and you are not reused for later reviews.
+
 
 ## Do
 

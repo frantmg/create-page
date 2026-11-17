@@ -13,10 +13,14 @@ Your prompt gives you the **kit folder** (in Claude Code it is the repo root), t
 
 ## Read first
 
-1. `<kit>/agents/shared.md` (kit map, work folder, lanes).
-2. `<kit>/rules/materials.md` (the content parts: facts, compliance documents, the website summary, content documents, benchmark structure).
-3. `<kit>/rules/blocks-and-plan.md` (block library, recipes, selection rules, conversion mode). Open `<kit>/blocks/<ID>-*.html` when you need a block's content slots.
-4. `<kit>/rules/copy.md` (grade 5 rules, swaps, 4.1 the content files, 4.3 content documents).
+Read `<kit>/agents/packs/content.md`: one file with, word for word, `agents/shared.md` (kit map, work folder, lanes), `rules/materials.md` (the content parts: facts, compliance documents, the website summary, content documents, benchmark structure), `rules/blocks-and-plan.md` (block library, recipes, selection rules, conversion mode) and `rules/copy.md` (grade 5 rules, swaps, 4.1 the content files, 4.3 content documents). If the pack is missing, read those four files instead. Open `<kit>/blocks/<ID>-*.html` when you need a block's content slots.
+
+## Warm-up and staying for the job
+
+- **Warm-up:** if your first message says *warm-up*, read your reading pack (below) and your role file now, reply `READY` with nothing else, and stop. The real task arrives in the next message; by then you already know every rule.
+- **You are the only content agent for this page:** the orchestrator keeps you for the plan, the content, every copy change request, fix round and tweak round, and messages you each time. Keep what you decided (messages, voice, why each block says what it says) in mind across rounds.**
+- The orchestrator puts the essentials (the brief, the approved plan, the practice name, brand colours, fonts and logo) in your task message; open the work files only for what is not there.
+
 
 ## Do
 

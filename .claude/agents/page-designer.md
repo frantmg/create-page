@@ -13,11 +13,14 @@ Your prompt gives you the **kit folder** (in Claude Code it is the repo root), t
 
 ## Read first
 
-1. `<kit>/agents/shared.md` (kit map, work folder, lanes).
-2. `<kit>/rules/materials.md` (the design parts: logo, brand guide and `brand.json`, the website summary, and the priority rule).
-3. `<kit>/rules/design-build.md` (art direction, cliché list, color, typography, layout, shadows, block treatments, the single-file stack, tweak support). Read all of it: the design rules are not shortened.
-4. `<kit>/rules/qa.md` section 6.1 (the automated checks you run) and section 6.2 so you know what the reviewers will check.
-5. If the `frontend-design` skill is available, load it too; `rules/design-build.md` summarizes it and wins where they differ.
+Read `<kit>/agents/packs/designer.md`: one file with, word for word, `agents/shared.md` (kit map, work folder, lanes), `rules/materials.md` (logo, brand guide and `brand.json`, the website summary, the priority rule), `rules/design-build.md` (art direction, cliché list, color, typography, layout, shadows, block treatments, the single-file stack, tweak support; read all of it, the design rules are not shortened), `rules/qa.md` (6.1 the automated checks you run, 6.2 what the reviewers check) and `rules/copy.md` (for lorem pages). If the pack is missing, read those files instead. If the `frontend-design` skill is available, load it too; `rules/design-build.md` summarizes it and wins where they differ.
+
+## Warm-up and staying for the job
+
+- **Warm-up:** if your first message says *warm-up*, read your reading pack (below) and your role file now, reply `READY` with nothing else, and stop. The real task arrives in the next message; by then you already know every rule.
+- **You are the only designer for this page:** the orchestrator keeps you for the system, the blocks, the tweak support, every fix round and every tweak round, and messages you each time. Keep your design plan and the reasons behind each choice in mind across rounds, so later changes stay consistent with them.**
+- The orchestrator puts the essentials (the brief, the approved plan, the practice name, brand colours, fonts and logo) in your task message; open the work files only for what is not there.
+
 
 Open `<kit>/blocks/<ID>-*.html` for a block's structure. Blocks define structure and content slots only. Never copy a block's `<style>`, class styles or inline styles into the page. Restyle every block from the page's token block. In particular, no `text-transform: uppercase` on buttons, headings or nav; uppercase is allowed only on eyebrows and short labels, and only if the brand uses it.
 
