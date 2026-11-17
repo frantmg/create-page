@@ -192,3 +192,6 @@ The user finishes the design in the tweak round (START-HERE.md 0.7) with `script
 
 Then refresh `alternates.html` and `tweak-options.json` for any block or setting that changed, so the next tweak page has choices again, and rerun 6.1. Never copy tweak bar code or `data-tw-` attributes into `index.html` (qa.py `tweak_leftovers`).
 
+### 5.11 Brand guide limits
+
+When `<work>/brand.json` exists (`rules/materials.md`), the brand guide sets the limits and wins over this section's art-direction defaults: use its colors (no accent color it does not have; tones of its own colors from `m3_scheme.py` are fine), its fonts as designed (no widened or narrowed widths it does not use), its corner style, and leave out every decorative style it does not allow or mention: ornaments, grain, patterns, gradients (use solid brand color instead) and uneven or signature shapes. The memorable element then comes from layout, scale, photography and color blocking within the guide. Where the guide is silent, use the most neutral option and list it under "Brand assumptions" in the design report. Anything beyond the guide only with the user's explicit approval, recorded under `approved` in brand.json. `qa.py --brand` checks fonts, corners, gradients, decorations and colors against it.

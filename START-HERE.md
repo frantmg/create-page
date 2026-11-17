@@ -2,13 +2,13 @@
 
 You are reading the page builder kit. If the user asked for a page and you were sent here (by the `/create-page` loader skill, a pasted repo link, or Claude Code opened in this repo), you are the **orchestrator**: follow this file from section 0.
 
-**Kit version 6.2.1** (see `VERSION` and `CHANGELOG.md`)
+**Kit version 6.2.2** (see `VERSION` and `CHANGELOG.md`)
 
 Builds landing pages and website pages for healthcare practices (home, specialty, condition, location, provider, about, insurance, testimonials, contact). Pages are assembled from the Macallan block library below, art-directed with the `frontend-design` approach (a distinct visual identity per practice, no generic AI look), built as one plain HTML file on Material Design logic (no build tools or installs), and written at a 5th-grade reading level, because plain copy converts best.
 
-This kit runs as a relay: the **orchestrator** (you, in the user's conversation) runs the intake and the relay, the **page-content** agent writes the plan and every word, the **page-designer** agent designs and builds, and the **page-qa** agent reviews independently. Section 0 says who does what. Do not skip the intake gate.
+This kit runs as a relay: the **orchestrator** (you, in the user's conversation) runs the intake and the relay, the **page-content** agent writes the plan and every word, the **page-designer** agent designs and builds (starting on the design system while the words are written), and three **page-qa** agents review independently, in parallel. Section 0 says who does what. Do not skip the intake gate. Agents never read this file: each reads `agents/shared.md` and its own role file.
 
-0. How this runs (roles, brief, the relay, fix routing, the tweak round)
+0. How this runs (roles, brief, content modes, timing, the relay, fix routing, the tweak round)
 1. Intake (gate)
 2. Read the materials
 3. Plan the page: pick the blocks
@@ -29,8 +29,8 @@ Section numbers used anywhere in this kit point to these files:
 | 0, 1, 7, 9 (0.7 tweak round) | `START-HERE.md` (this file) |
 | 2 | `rules/materials.md` |
 | 3 (3.1 to 3.4) | `rules/blocks-and-plan.md` |
-| 4 | `rules/copy.md` |
-| 5 (5.1 to 5.9) | `rules/design-build.md` |
+| 4 (4.1 to 4.3) | `rules/copy.md` |
+| 5 (5.1 to 5.11) | `rules/design-build.md` |
 | 6 (6.1 to 6.3) | `rules/qa.md` |
 | 8.1 / 8.2 / 8.3 | `scripts/readability.py` / `scripts/m3_scheme.py` / `scripts/qa.py` |
 | 8.5 | `scripts/logo.py` (trims, resizes and embeds the logo; reports light or dark and its main color) |
@@ -39,9 +39,12 @@ Section numbers used anywhere in this kit point to these files:
 | 8.7 | `scripts/tweakbar.py` + `templates/tweakbar.html` (makes `<work>/tweak.html`: the page with a tweak bar, for the tweak round in 0.7) |
 | 8.8 | `scripts/tweakserve.py` (serves the tweak page locally so Send to Claude hands the changes straight back, 0.7) |
 | 8.9 | `scripts/apply_tweaks.py` (writes the mechanical part of a `tweaks.json` into `index.html` in seconds, 0.7) |
+| 8.10 | `scripts/timing.py` (records each stage's start and end in `<work>/timing.md`, 0.5) |
+| 8.11 | `scripts/setup.py` (installs what the scripts need, in the background during the intake) |
+| 8.12 | `scripts/fetch_site.py` (reads the current website once during the intake into `<work>/materials/site/`) |
 | axe-core | `scripts/vendor/axe.min.js` (bundled, with its `LICENSE`) |
 | Block reference HTML | `blocks/<ID>-*.html` (structure and content reference only; never their styling) |
-| Agent roles | `agents/content.md`, `agents/designer.md`, `agents/qa.md` |
+| Agent roles | `agents/shared.md` (read by every agent) plus `agents/content.md`, `agents/designer.md`, `agents/qa.md` (each agent's full instructions; also in `.claude/agents/`) |
 
 Run scripts from the kit, for example `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --brand-fonts "Brand Font"`. Never edit the kit while building a page; client work goes in the work folder.
 
@@ -55,19 +58,20 @@ The page is made by a relay: content first, then design, then an independent rev
 
 | Role | Who | Owns | Hands off | Never |
 |---|---|---|---|---|
-| Orchestrator | The main conversation (when the user runs `/create-page` or asks for a page) | Section 1 intake, the brief, running the relay and fix routing (0.6), delivery (section 7) | Brief to page-content | Writes copy or builds the page when the agents are available |
+| Orchestrator | The main conversation (when the user runs `/create-page` or asks for a page) | Section 1 intake, the brief, `brand.json` from the brand guide, the block plan on lorem pages, stage timing (0.5), running the relay and fix routing (0.6), delivery (section 7) | Brief to page-content and page-designer | Writes copy or builds the page when the agents are available |
 | page-content | Agent (`page-content`) | Sections 2 (facts, compliance, current site, benchmark), 3 and 4: block plan, every word, compliance wording, placeholders | `content/plan.md` + `content/content.json` | Touches layout, styles or code |
 | page-designer | Agent (`page-designer`) | Sections 2 (brand, logo, current site look), 5 and 6.1: design plan, build, mobile, ADA build quality | `<work>/index.html` | Changes any word; it sends a copy change request instead |
-| page-qa | Agent (`page-qa`), fresh for every review | Section 6 in full | QA report | Edits anything, sees the other agents' notes |
+| page-qa | Agent (`page-qa`), three fresh ones per review, in parallel (areas A, B, F · C · D, E) | Section 6 for its areas | QA report | Edits anything, sees the other agents' notes |
 
-If you were started by the user (or by `/create-page`), you are the orchestrator. If your prompt says you are page-content, page-designer or page-qa, follow 0.3, 0.4 or 0.5.
+If you were started by the user (or by `/create-page`), you are the orchestrator. If your prompt says you are page-content, page-designer or page-qa, stop reading this file: follow `agents/shared.md` and your role file in `agents/`.
 
 ### 0.2 The brief
 
-After the intake, create a new work folder (`<page-slug>/` in the working directory). **Before writing the brief, gather the materials into `<work>/materials/`:**
+As soon as Round 1 of the intake is answered, create the work folder (`<page-slug>/` in the working directory) so the background steps have somewhere to write (1, Before the questions). **Before writing the brief, gather the materials into `<work>/materials/`:**
 
 - Copy every file the user attached (logo, brand guide, compliance documents, photos) into `<work>/materials/`, keeping the file names. Agents only see what is in this folder, so never just mention an attachment in the brief.
-- **Logo:** if the user did not attach one but the practice has a current website, get it from there: find the logo in the site header (an `<img>` src, an inline `<svg>`, or as a last resort the `apple-touch-icon` or `og:image`), download it with `curl -L -o <work>/materials/logo.<ext> <url>` (save inline SVG markup as `logo.svg`), and check that the file is really the logo. Write `Logo: none` only when there truly is no logo anywhere.
+- **Brand guide:** if the user shared one, write `<work>/brand.json` from it (`rules/materials.md`) before the build starts.
+- **Logo:** if the user did not attach one but the practice has a current website, take the one `fetch_site.py` saved in `<work>/materials/site/` (check that it is really the logo), or get it from the site: find the logo in the site header (an `<img>` src, an inline `<svg>`, or as a last resort the `apple-touch-icon` or `og:image`), download it with `curl -L -o <work>/materials/logo.<ext> <url>` (save inline SVG markup as `logo.svg`), and check that the file is really the logo. Write `Logo: none` only when there truly is no logo anywhere.
 
 Then write `<work>/brief.md`. It is the only thing the relay starts from, so it must be complete:
 
@@ -79,6 +83,8 @@ Then write `<work>/brief.md`. It is the only thing the relay starts from, so it 
 - Keyword: ...  - Traffic: ...  - Lead flow: ...  - Proof available: ...   (conversion mode)
 - Plan approval: approved plan below / build directly
 - Review mode: full review / quick draft (automated checks only)
+- Content: write / document (<absolute path to the client's content document>) / lorem (rules/copy.md 4.2-4.3)
+- Brand guide: <absolute path to brand.json> or none
 - Brand fonts: ... or none given
 - Logo: <absolute path in <work>/materials/> (attached / from the current website) or none
 - Other materials (absolute paths in <work>/materials/): brand guide ..., compliance docs ..., photos ... (or none)
@@ -88,99 +94,67 @@ Then write `<work>/brief.md`. It is the only thing the relay starts from, so it 
 - Work folder: <absolute path>
 ```
 
-### 0.3 page-content mode
+### 0.3 Content modes
 
-Skip section 1. Read the brief; if a required field is missing, return `BRIEF INCOMPLETE` with the list and stop. Do the content parts of section 2 (practice facts, compliance documents, current website facts and voice, benchmark structure takeaways), then section 3 (block plan; use the approved plan if the brief has one) and section 4 (every word). Write two files in `<work>/content/`:
+The intake asks how the words are made (Round 2, "Content"):
 
-- `plan.md`: the ordered block list, one block per line starting with its number and full block ID including the variant (for example `2. M01-B: Message 1 · Seen this week`), with the message it carries; benchmark ideas used go on lines after the list. `scripts/wireframe.py` reads this list.
-- `content.json`: every word on the page, in this shape:
+- **Write the content with the design** (`Content: write`): page-content writes every word, in parallel with the designer's system work.
+- **I have a content document** (`Content: document`): the client's document goes into `<work>/materials/` and page-content uses its words (`rules/copy.md` 4.3), listing every change it had to make, in parallel with the designer.
+- **Lorem ipsum** (`Content: lorem`): no words are written. You write `plan.md` yourself (block plan from 3.2 and 3.3 for the page type, goal and messages); the designer fills the slots with lorem (`rules/copy.md` 4.2) and builds in one go. If the user later wants real words, start page-content then; the designer swaps the text in with targeted edits.
 
-```json
-{
-  "meta": { "page_title": "", "meta_description": "", "cta_primary": "", "cta_secondary": "", "keyword": "" },
-  "blocks": [
-    { "id": "M01-B", "message": "1", "slots": { "h1": "", "who": "", "bullets": [""], "cta": "", "image_brief": "Photo: doctor with patient, 4:5" } }
-  ],
-  "legal": { "disclaimer": "", "before_after_disclosure": "", "form_note": "Please don't include medical details." },
-  "placeholders": ["[City]"],
-  "compliance_notes": ["what you could not confirm and why"]
-}
-```
+### 0.4 The agents' instructions
 
-Slot names follow the block's content slots in 3.1 (headline, bullets, steps, faq items, and so on). Image needs go in `image_brief` slots so the designer knows what each photo should show. Run `scripts/readability.py` on `content.json` and fix every block marked `FIX`. Return:
+Each agent's full mode (inputs, what to do, report format, fix and tweak rounds) is in its role file: `agents/content.md`, `agents/designer.md`, `agents/qa.md`, plus the short shared section in `agents/shared.md`. Agents read only those files and the rules their role file lists, never this file; the design and copy rules themselves are read in full. Their reports: `PLAN READY` / `CONTENT REPORT` / `CONTENT FIX REPORT` / `CONTENT TWEAK REPORT`; `SYSTEM READY` / `DESIGN REPORT` / `TWEAK SUPPORT REPORT` / `DESIGN FIX REPORT` / `DESIGN TWEAK REPORT` (with `COPY CHANGE REQUEST`s); and the QA report in `rules/qa.md` 6.3.
 
-```
-CONTENT REPORT
-Files: <plan.md path>, <content.json path>
-Block plan: <ordered block IDs and the message each carries>
-Reading grade: <page grade, every block OK>
-Placeholders: <list>     Compliance notes: <list>
-```
+### 0.5 Stage timing
 
-In a fix round you receive findings or copy change requests. Change only what they ask, keep the grade at 5.9 or lower, and return `CONTENT FIX REPORT` (each finding or request ID, what changed, or why not).
-
-### 0.4 page-designer mode
-
-Skip sections 1, 3 and 4. Read the brief, `plan.md` and `content.json`. Do the design parts of section 2 (logo, brand guide, the current website's look), run `scripts/logo.py` on the brief's logo, then section 5: design plan, review, build. Write `<work>/index.html` from `templates/page.html` and the blocks, copying every word from `content.json` exactly; never type, cut or reword copy in the markup. Also write the tweak support files (5.10): `<work>/alternates.html` (other versions of the planned blocks, in the page's own style) and `<work>/tweak-options.json` (alternate palettes and font pairings). If the copy does not fit the design (a headline too long for the hero, too many bullets for a block, a missing slot), do not change it: return a `COPY CHANGE REQUEST` with the block ID, slot, the problem and the limit (for example "M01-B h1: 9 words wraps to 4 lines on 390px; max 6 words"). Run the automated checks in 6.1 and fix design-side failures. Return:
-
-```
-DESIGN REPORT
-Preview: <path to <work>/index.html>   Size: <KB>   Screenshots: <paths>
-Design direction: <palette, type pairing, the memorable element>
-Automated checks: <pass/fail summary from qa.py>
-Copy change requests: <list or none>
-Logo: <embedded image or text wordmark; light or dark; the background it sits on>
-Tweak support: <alternates built per block, palettes, font pairings>
-Flags: <font, asset or brand issues the designer could not resolve>
-```
-
-In a fix round, fix the design, mobile and ADA findings sent to you in `<work>/index.html`, bring in any updated copy from `content.json`, rerun 6.1, and return `DESIGN FIX REPORT` (each finding ID, what changed, or why not). Minor findings are fixed directly and are not re-reviewed.
-
-In a tweak round (0.7) `scripts/apply_tweaks.py` has already applied the mechanical changes; you get its `needs_designer` and `cleanup` lists and the updated content files: do those as in 5.10 with targeted edits, rerun 6.1 and return `DESIGN TWEAK REPORT` (each item, what you did, and anything you adjusted or could not do and why).
-
-### 0.5 page-qa mode
-
-You review a page you did not make. You get the preview path, the brief and the client's materials, nothing else. Stay read-only (scratch files in `/tmp/qa/`). Follow section 6 completely and return the report in 6.3. In a re-review you also get the list of findings that failed last round: re-check only those, plus the automated checks in 6.1, and return the same report format.
+Record the start and end of every stage so the real bottleneck shows: `python3 <kit>/scripts/timing.py <work> start <stage>` and `... end <stage>`, with the stages `intake`, `wireframe`, `content`, `design`, `qa`, `fixes`, `tweak` and `deliver` (repeat runs are numbered automatically; stages that run in parallel overlap in the table). The intake starts before the work folder exists: note `date -Iseconds` when you start it and record it later with `--at`. Each call rewrites `<work>/timing.md` (one row per stage run, totals per stage, the total time and the slowest stage). `timing.py <work> report` prints it for the final summary (section 7).
 
 ### 0.6 Orchestration: the relay
 
-1. **Intake** (section 1). If the user chose to approve the plan first, start page-content with an instruction to return only `plan.md`. Then run `python3 <kit>/scripts/wireframe.py <work>/content/plan.md --title "<Practice> <page type>"`, send `<work>/wireframe.html` to the user (section 7) together with the short plan list, and ask with a guided question (Approve plan · Change something). If the user changes the plan, have page-content update `plan.md`, rebuild the wireframe and ask again. Record the approved plan in the brief.
-2. **Brief:** write `brief.md` (0.2), including the review mode from the intake (full review by default).
-3. **Content:** start `page-content` with the brief path. Wait for its `CONTENT REPORT`. If `BRIEF INCOMPLETE`, ask the user and restart.
-4. **Design:** start `page-designer` with the brief path and the two content files. If it returns copy change requests, send them to page-content (continue the same agent with SendMessage if available, otherwise start a new one with the brief, content files and requests), then send the updated content back to page-designer. At most 2 copy round trips; after that, the designer adapts the layout to the copy.
-5. **First draft to the user, right away:** as soon as `<work>/index.html` exists, send it to the user (as in section 7) with the line "First draft, QA is running." Do not wait for the review.
-6. **Quick draft mode** (the user chose "Quick draft" in the intake): skip steps 7 to 9. Run the tweak round (step 10), then deliver the page with the designer's automated check results (qa.py and readability.py) and say clearly that no independent review ran.
-7. **QA:** start a **fresh** `page-qa` with only the preview path, the brief path and the material paths. Never pass the other agents' reports or notes.
-8. **Fix routing:** if the verdict is FAIL, split the findings by owner:
-   - **page-content:** area A (copy, brief, reading level, CTA words), area B wording (claims, disclaimers, placeholders, form note), area F order and plan.
+Time every stage (0.5). Work that does not depend on each other runs at the same time; the design rules, the block review and the full review stay exactly as they are.
+
+1. **Intake** (section 1), with the background steps it starts: `setup.py` at the very start, the work folder after Round 1, `fetch_site.py` as soon as the website is known.
+   **Block review**, if the user chose "Show me the plan first" (the recommended answer): get `plan.md` (page-content with "plan only" for write and document modes; write it yourself for lorem), run `python3 <kit>/scripts/wireframe.py <work>/content/plan.md --title "<Practice> <page type>"`, send `<work>/wireframe.html` (section 7) with the short plan list, and ask (Approve plan · Change something). If the user changes the plan, update `plan.md` the same way, rebuild the wireframe and ask again. Record the approved plan in the brief; the build follows exactly that plan.
+2. **Brief:** write `brief.md` (0.2), with the review mode (full review by default), the content mode (0.3), the content document and `brand.json` when there are any.
+3. **Content and design at the same time:**
+   - **Write or document:** start `page-content` (full content) and `page-designer` (phase **system**) together. The designer sets the design plan, tokens, type, header and footer while the words are written, and lays out no blocks yet. When `CONTENT REPORT` arrives (if `BRIEF INCOMPLETE`, ask the user and restart), send `content.json` to the same designer (continue it with SendMessage; if that is not possible, start a new one with phase **blocks**, which reads `<work>/design-plan.md`). It builds the blocks around the real words.
+   - **Lorem:** start `page-designer` with phase **full build**.
+   - **Copy change requests:** at most **one** round trip: send them to page-content (continue the same agent), then the updated content back to the designer; after that the designer adapts the layout to the words.
+4. **Build checks:** the designer checks with `qa.py --fast` while working and finishes with one full run to `<work>/qa/auto.json` (with `--brand` when there is a brand.json), then returns `DESIGN REPORT`.
+5. **First look right away:** make and show the tweak page (0.7 steps 1 and 2) with the line "Here's your page. The review is running: change anything you like, then press Send to Claude, or Looks good when you're happy." Do not wait for the review.
+6. **In the background, at the same time** (start them as background agents; if the client cannot, start them right after showing the page):
+   - **QA, three reviewers in parallel** (full review, the default): start three **fresh** `page-qa` agents with only the preview path, the brief path, the material paths and the automated results path (`<work>/qa/auto.json`, which they reuse while the page is unchanged): reviewer 1 areas A, B and F, reviewer 2 area C, reviewer 3 areas D and E. Never pass the other agents' reports or notes. Merge their reports into one (6.3; FAIL if any found a blocker or major). **Hold the findings:** never change `index.html` while the user may be tweaking it (it would reset their unsent changes); tell the user in one line how many findings there are and that they will be fixed with their changes.
+   - **Tweak support:** ask page-designer (the same agent if you can) for `alternates.html` and `tweak-options.json` (5.10). When it is done, rebuild `tweak.html` (the page has not changed, so the user's unsent changes are kept) and tell the user in one line: "More block versions and palettes are ready: refresh the tweak page." (Chat: republish the same tweak artifact.)
+   - **Quick draft** (only when the user asked for it): no reviewers; the designer's automated checks are the QA.
+7. **When the user sends changes or says it looks good** (0.7): apply the tweaks first, then the held findings that still apply (findings on removed or replaced blocks are dropped). Route findings by owner:
+   - **page-content:** area A (copy, brief, reading level, CTA words), area B wording (claims, disclaimers, placeholders, form note), area F order and plan. On a lorem page there are no copy findings; plan findings are yours to fix in `plan.md`.
    - **page-designer:** areas C (design quality), D (mobile), E (ADA), area B items that are build issues (tracking scripts, form markup, legal links missing from the footer layout).
    - A finding that needs both goes to page-content first, then page-designer.
-   - Send **minor** findings too: the owner fixes them directly, and they are not re-reviewed.
-   Content fixes run first, then the designer updates `index.html` with the new `content.json` plus its own fixes.
-9. **Re-review:** start a **new** page-qa with the preview, brief and material paths plus the list of blocker and major findings that failed. It re-checks only those findings plus the automated checks (6.1). **Default is 1 fix round.** Run a second round only if blockers remain; remaining majors are reported at delivery.
-10. **Tweak round** (0.7): once the design is done, give the user the tweak page to fine-tune it, and apply what they send back.
-11. **Deliver** (section 7) with the final QA report. If blockers or majors remain, say so first and list them; never present a failing page as passing. Delivery is not done until the page is published or the user was told why it couldn't be.
+   - **Fixes are edits, not rebuilds:** the designer changes only what the findings name, with targeted edits (a whole block only when a finding needs that block redesigned, never the whole page), and finishes with one full qa.py run to `<work>/qa/auto.json`. Minor and mechanical findings (6.3) are fixed directly and not re-reviewed.
+8. **Re-review:** if there were blocker or judgment-major findings, start a **fresh** page-qa (the reviewers of the affected areas, or one for all) with the preview, brief, material and automated results paths plus those findings. It re-checks only those plus the automated results. **Default is 1 fix round**; a second only if blockers remain; remaining majors are reported at delivery.
+9. **Deliver** (section 7) when the user says it looks good, with the merged QA report. If blockers or majors remain, say so first and list them; never present a failing page as passing. Delivery is not done until the page is published or the user was told why it couldn't be.
 
-Tell the user one line when each stage starts (writing content, designing, first draft sent, reviewing, fixing, tweaking); keep the task list updated.
+Tell the user one line when each stage starts (writing content and designing, page ready, reviewing, applying changes); keep the task list updated.
 
-**Starting the agents.** If named agents `page-content`, `page-designer` and `page-qa` are installed (Claude Code opened in this repo loads them from `.claude/agents/`), use them. Otherwise start `general-purpose` agents with the prompt: "Read `<kit>/agents/content.md` and follow it. Kit folder: `<kit>`. Brief: `<work>/brief.md`." (or `designer.md`, `qa.md`), always passing the absolute kit and work paths. If no agent tool exists at all, do each stage yourself in order, keeping the same files and lane rules, do the QA as a separate clean pass reading only the page, brief and materials, and tell the user the review was not independent.
+**Starting the agents.** If named agents `page-content`, `page-designer` and `page-qa` are installed (Claude Code opened in this repo loads them from `.claude/agents/`), use them. Otherwise start `general-purpose` agents with the prompt: "Read `<kit>/agents/shared.md` and `<kit>/agents/content.md` and follow them. Kit folder: `<kit>`. Brief: `<work>/brief.md`." (or `designer.md`, `qa.md`), always passing the absolute kit and work paths, the phase or the review areas. If no agent tool exists at all, do each stage yourself in order, keeping the same files and lane rules, do the QA as a separate clean pass reading only the page, brief and materials, and tell the user the review was not independent.
 
 ### 0.7 The tweak round
 
-After the design is done (the QA verdict in step 9, or the build in quick draft mode), the user gets the page with a **tweak bar** to finish the design themselves: palettes, a new main colour, single colours with a live contrast check, font pairings or any Google font, sizes, spacing, corners, shadows, page width and button shape; and per block (each shown as a live preview): move, hide, swap to another version, replace it with any block from the library or add a library block below it (the tweak page marks the spot; the block is built when the changes come back), change the background, edit text and leave notes. One button sends everything back. Skip this round in unattended sessions.
+Right after the build (0.6 step 5), while the review runs, the user gets the page with a **tweak bar** to finish the design themselves: palettes, a new main colour, single colours with a live contrast check, font pairings or any Google font, sizes, spacing, corners, shadows, page width and button shape; and per block (each shown as a live preview): move, hide, swap to another version, replace it with any block from the library or add a library block below it (the tweak page marks the spot; the block is built when the changes come back), change the background, edit text and leave notes. One button sends everything back. Skip this round in unattended sessions.
 
 1. **Make the tweak page:** `python3 <kit>/scripts/tweakbar.py <work>/index.html` writes `<work>/tweak.html` (it picks up `alternates.html` and `tweak-options.json` from the work folder; add `--seeds "#HEX"` for palettes made from extra brand colours). If it prints warnings about blocks or alternates, send them to page-designer to fix first. `index.html` is never changed by this.
 2. **Show it and wait for the button:**
    - **Claude Code:** start `python3 <kit>/scripts/tweakserve.py <work> --once --open` as a **background** command. It opens the tweak page in the browser and exits as soon as the user presses **Send to Claude** or **Looks good, deliver**; its exit wakes you up. Give the user the address from `<work>/tweak-url.txt` in one line and end your turn: no question, nothing to paste. Its output is `RECEIVED apply <work>/tweaks.json` or `RECEIVED approve` (or `TIMEOUT` after an hour: say the tweak page is still open and how to restart it).
    - **Other clients:** publish `tweak.html` as its **own** private artifact titled "<Practice> <page type> tweaks" (icon "settings"), declaring the `db` capability (`capabilities: {db: {}}`), never in place of the page's artifact; later rounds republish to the same tweak artifact. Tell the user: press **Send to Claude** (or **Looks good, deliver**) on the page, then type "done" here. On "done", read the artifact's data (`ArtifactData` get, collection `tweaks`, document `latest`): `action` is `apply` or `approve`, `json` is the change file. If there is no data or the tool is missing, the page has copied the changes instead: ask the user to paste them.
    - Their unsent changes are kept in that browser, so they can close the page and come back.
-3. **Approve:** `approve` (or the user says it looks good) means deliver (section 7).
+3. **Approve:** `approve` (or the user says it looks good) means deliver (section 7), after the held QA findings are fixed (0.6 step 7).
 4. **Receive:** save the change file to `<work>/tweaks.json` (tweakserve does this itself and keeps earlier rounds as `tweaks-1.json`, ...). Its `page_hash` must match the current `index.html`; apply_tweaks.py refuses otherwise (the tweak page was older: rebuild it and ask again). Show the `summary` lines back in one short list.
 5. **Confirm brand changes:** if `brand_overrides` is not empty (the brief fixed the brand colours or fonts and the user changed them), ask with a guided question (Use my change · Keep the brand) before applying; drop the change if they keep the brand.
 6. **Words first:** if there are `copy_edits`, `blocks.order`, `blocks.hidden`, `blocks.variants`, `blocks.replacements` or `blocks.added`, send `tweaks.json` to page-content. It updates `plan.md` and `content.json`, writes words for new blocks, and adds a `final` text to every copy edit in `tweaks.json` (the user's words, or the closest version that passes grade 5 and compliance). It returns `CONTENT TWEAK REPORT`.
 7. **Apply the mechanical changes in seconds:** `python3 <kit>/scripts/apply_tweaks.py <work>/tweaks.json`. It writes tokens, fonts, sizes, shape, order, hidden blocks, block versions, backgrounds and the `final` text edits straight into `index.html` (backups in `<work>/backups/`) and prints what it applied, plus `needs_designer` (replaced and added blocks, notes, contrast failures, anything it could not do) and `cleanup`.
 8. **Designer only when needed:** if `needs_designer` or `cleanup` is not empty, send them to page-designer with the content files: it does only those, with targeted edits, and returns `DESIGN TWEAK REPORT`. Otherwise skip the designer.
-9. **Check:** the 6.1 run is always required (the designer's, or yours when no designer was needed: `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js`). In full review mode, if blocks or words changed (order, hidden, variants, replaced or added blocks, copy edits), start a **fresh** page-qa limited to the changed blocks plus 6.1; changes to the design only (colours, fonts, sizes, shape, backgrounds) need 6.1 only. Route any findings as in 0.6 step 8.
+9. **Check:** the 6.1 run is always required (the designer's, or yours when no designer was needed: `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --out <work>/qa/auto.json`, adding `--brand <work>/brand.json` when it exists). In full review mode, if blocks or words changed (order, hidden, variants, replaced or added blocks, copy edits), start a **fresh** page-qa limited to the changed blocks plus 6.1; changes to the design only (colours, fonts, sizes, shape, backgrounds) need 6.1 only. Route any findings as in 0.6 step 8.
 10. **Next round:** rebuild `tweak.html` from the new `index.html` and show it again (step 2). There is no round limit; the user decides when it is done. Then deliver (section 7) and mention what each tweak round changed.
 
 ---
@@ -190,6 +164,8 @@ After the design is done (the QA verdict in step 9, or the build in quick draft 
 Ask with **guided questions**: the `AskUserQuestion` tool, which shows clickable options and always lets the user type their own answer ("Other"). Ask in rounds, not as one long text message. Do not plan, write or build until Round 1 and Round 2 are answered.
 
 Before asking, read anything already in the request (logo, URL, notes) and tailor the options to it: use the practice's specialty, city and services in the examples. Skip any question the request already answers clearly, and say what you took from it in one line.
+
+**Before the questions (background, nobody waits for these):** note the start time (`date -Iseconds`) for the stage timing (0.5), and start `python3 <kit>/scripts/setup.py` as a background command so the tools are installed while the user answers. After Round 1, create the work folder (0.2). As soon as the current website is known (from the request or Round 3), start `python3 <kit>/scripts/fetch_site.py <url> <work>/materials` as a background command; the agents read its summary instead of browsing the site again.
 
 **Round 1: page basics (one `AskUserQuestion` call, 4 questions)**
 
@@ -202,7 +178,15 @@ Before asking, read anything already in the request (logo, URL, notes) and tailo
 
 The page goal = audience + main action (+ page type). If the user wants a second action, they can type it under "Other" on Main action, or ask in Round 2.
 
-**Round 2: top 3 messages, in order (one `AskUserQuestion` call, 3 questions)**
+**Round 2: top 3 messages in order, and the content (one `AskUserQuestion` call, 4 questions)**
+
+The fourth question is how the words are made (0.3):
+
+| Header | Question | Options |
+|---|---|---|
+| Content | How should we handle the page's words? | Write the content with the design (Recommended) · I have a content document (attach it) · Lorem ipsum placeholder for now |
+
+If they have a content document, ask them to attach it with the Round 3 materials (one line) and copy it into `<work>/materials/`. With lorem, the messages still shape the block plan and order.
 
 Ask each message as its own question so the order is kept: header "Message 1", "Message 2", "Message 3". Question text: "What is the #1 thing visitors must know?" (then #2, #3). Offer 3 to 4 likely messages for this practice and page, phrased in plain 5th-grade words, for example: Seen this week · Plan made for you · No surgery first · Most insurance taken · Top-rated doctors · Close to home. Do not offer an option already picked in an earlier message. The user can type their own.
 
@@ -223,16 +207,18 @@ Defaults if skipped: Google search ads, short form, no video. Meta or social tra
 
 | Header | Question | Options |
 |---|---|---|
-| Materials | Which of these can you share? Attach them in your next message. (multiSelect) | Logo · Brand guide (colors, fonts, voice) · Compliance rules (claims, disclaimers, consent) · Photos |
+| Materials | Which of these can you share? Attach them in your next message. (multiSelect) | Brand guide (colors, fonts, voice) · Logo · Compliance rules (claims, disclaimers, consent) · Photos |
 | Current site | Does the practice have a current website? | Yes (type the URL under Other) · No current website |
 | Benchmark | Do you have a website example to use as a benchmark? | Yes (type the URL under Other) · No benchmark |
 | Review | Speed or full review? (optional) | Full review (Recommended) · Quick draft: one build plus automated checks, no review agent |
 
 Note in the Materials question that anything not shared becomes a `[placeholder]` and practice facts (phone, locations, hours, providers, insurance, real reviews) can be typed or pasted. The Review question is optional: if it is skipped or unanswered, use Full review. Skip any question the request already answers. If the user picks materials, wait for the attachments, then copy them into `<work>/materials/` (0.2); if they pick none or type "none", continue (the logo still comes from the current website when there is one). If they say "Yes" to a site without giving the URL, ask for it in one short line.
 
+**Brand guide, always asked:** the Materials question is never skipped, even when the request already gives a website or a logo; a website does not replace a brand guide (the guide's colors, fonts and voice win, `rules/materials.md`). When a guide is shared, write `<work>/brand.json` from it before the build and tell the user in one line that the design will stay inside the guide.
+
 **Rules**
 
-- Every round must be answered before the next. Required answers are page type, audience, main action and all 3 messages (plus Round 2b in conversion mode; its defaults apply if the user skips it). If an answer is vague, ask one short follow-up (another guided question if possible).
+- Every round must be answered before the next. Required answers are page type, audience, main action, all 3 messages and the content choice (write, if skipped), plus Round 2b in conversion mode (its defaults apply if the user skips it). If an answer is vague, ask one short follow-up (another guided question if possible).
 - Keep each question self-contained: the user may only see the question dialog.
 - If `AskUserQuestion` is not available (some surfaces, scheduled runs), ask the same questions in plain text, one round per message.
 - When something optional is missing, say what you will do instead in one line (for example: "No brand color given, so I'll use the logo's blue") and continue. Never invent practice facts; use clear `[placeholders]`.
@@ -254,6 +240,9 @@ Note in the Materials question that anything not shared becomes a `[placeholder]
 - Send the screenshots only if the user wants a quick look.
 - Add `<!-- Built with create-page vX.Y.Z -->` (the kit version from `VERSION`) as the first line inside `<head>` of every page's `index.html` (`templates/page.html` already has the line; set the version).
 - In conversion mode, also give: a pre-launch compliance checklist (disclaimers, before/after disclosures and consent, review authenticity, HIPAA-compliant form processing, no tracking pixels on the form without a BAA) for the team to tick before launch, and a message-match line (keyword → H1 → 2 or 3 matching ad headlines) so the ad and page stay aligned.
+- Include the stage timing: end the `deliver` stage, then paste the totals from `python3 <kit>/scripts/timing.py <work> report` (minutes per stage, total time, slowest stage).
+- With a brand guide, list the brand assumptions (what the guide was silent on and the neutral choice made) and confirm the page passed qa.py's brand check.
+- On a lorem page, say first that it uses placeholder text and is a design draft, not ready to launch; skip the reading grade and the compliance checklist, and offer to have page-content write the real words next.
 - Finish with a short note: the kit version, the design direction in one line (palette, type pairing, the memorable element), the block plan used (and the benchmark ideas it borrowed, if any), the page's reading grade, the list of `[placeholders]` the practice must fill, and any compliance flags.
 - Offer next steps as options, for example: another tweak round, A/B variant of the hero, another page from the sitemap, or a dark theme.
 
