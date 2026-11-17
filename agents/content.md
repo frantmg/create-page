@@ -46,7 +46,7 @@ You get `<work>/tweaks.json`, the user's changes from the tweak bar. Your part:
 - `blocks.variants` (for example `"M05-B": "M05-A"`): change the block ID in `plan.md` and `content.json`, and write words for any slot the new version has that the old one did not (check its slots in 3.1).
 - Notes that ask for different words.
 
-Ignore the `design` part; it belongs to page-designer. Run `readability.py` again and return `CONTENT TWEAK REPORT` (each change, what you did, or why not).
+Then write a `final` text into every entry of `copy_edits` in `tweaks.json` (the user's words, or the closest version that passes): `scripts/apply_tweaks.py` puts exactly that text on the page. Ignore the `design` part; it belongs to page-designer. Run `readability.py` again and return `CONTENT TWEAK REPORT` (each change, what you did, or why not).
 
 ## Never
 

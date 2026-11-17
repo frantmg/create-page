@@ -30,7 +30,7 @@ Open `<kit>/blocks-lite/<ID>-*.html` for each planned block's structure and cont
 
 ## Build
 
-Skip sections 1, 3 and 4. Read the brief, `plan.md` and `content.json`. **Placeholder content** (the brief says `Content: placeholder`): there is no `content.json`; fill every slot with lorem ipsum as in `<kit>/rules/copy.md` 4.2 (real words only where that section says), and send no copy change requests: size the lorem to the layout yourself. Do the design parts of section 2, run `logo.py`, then section 5: design plan, review, build. Write `<work>/index.html` from `<kit>/templates/page.html` and the planned blocks, copying every word from `content.json` exactly. There is no build step: the file you write is the page. With the build, write the tweak support files (5.10): `<work>/alternates.html` and `<work>/tweak-options.json`, keeping every block section a direct child of `<main>`; check them with `python3 <kit>/scripts/tweakbar.py <work>/index.html --out /tmp/tweak-check.html` and fix any warnings.
+Skip sections 1, 3 and 4. Read the brief, `plan.md` and `content.json`. **Placeholder content** (the brief says `Content: placeholder`): there is no `content.json`; fill every slot with lorem ipsum as in `<kit>/rules/copy.md` 4.2 (real words only where that section says), and send no copy change requests: size the lorem to the layout yourself. Do the design parts of section 2, run `logo.py`, then section 5: design plan, review, build. Write `<work>/index.html` from `<kit>/templates/page.html` and the planned blocks, copying every word from `content.json` exactly. There is no build step: the file you write is the page. Keep every block section a direct child of `<main>`, and wrap each block's CSS in `/* block:ID */ ... /* /block:ID */` markers (5.8) so tweaks can move or remove it. **Build `index.html` only and hand back fast:** the user sees the page as soon as you return. The tweak support files come in a separate request (below).
 
 **Automated checks (6.1), once per stage:** while you work, check with `python3 <kit>/scripts/qa.py <work>/index.html --fast --brand-fonts "<brand fonts from the brief>"` (390 and 1440px only). When the page is ready to hand back, run the full check once: the same command without `--fast` and with `--out <work>/qa/auto.json`. page-qa reuses that file instead of running qa.py again, so make it the last thing you do to `index.html`; if you change the page afterwards, run it again. Look at the screenshots and the `logo`, `alignment` (including `row_tops_w1440`) and `style` results and fix design-side failures before handing back.
 
@@ -43,8 +43,16 @@ Design direction: <palette, type pairing, the memorable element>
 Automated checks: <pass/fail summary from the full qa.py run>   Results: <work>/qa/auto.json (page_hash ...)
 Copy change requests: <list or none>
 Logo: <embedded image or text wordmark; light or dark; the background it sits on>
-Tweak support: <alternates built per block, palettes, font pairings>
 Flags: <font, asset or brand issues you could not resolve>
+```
+
+## Tweak support (a separate, background request)
+
+After your build the orchestrator asks for the tweak support files while the user is already looking at the page: write `<work>/alternates.html` (other versions of the planned blocks, each version's CSS in its own `<style data-variant="ID">`) and `<work>/tweak-options.json` (2 or 3 palettes from `m3_scheme.py`, 2 or 3 font pairings, `brand_locked`) as in `rules/design-build.md` 5.10. **Never change `index.html` in this request** (the user may be tweaking it). Check with `python3 <kit>/scripts/tweakbar.py <work>/index.html --out /tmp/tweak-check.html`, fix any warnings, and return:
+
+```
+TWEAK SUPPORT REPORT
+Alternates: <block: versions built>   Palettes: <names>   Font pairings: <names>   Warnings: <none or list>
 ```
 
 ## Copy is read-only
@@ -61,7 +69,7 @@ Verify with `--fast` while fixing, then finish with one full run to `<work>/qa/a
 
 ## Tweak rounds
 
-You get `<work>/tweaks.json` (the user's changes from the tweak bar) and the content files page-content has already updated (placeholder pages: apply `copy_edits` yourself, as written). Apply the design side as in `rules/design-build.md` 5.10 (tokens, palette, fonts, sizes, shape, backgrounds, block versions, replaced and added blocks, design notes and contrast failures), using targeted edits, never a full rewrite. A brand change in `brand_overrides` reaches you only after the user confirmed it, so apply it. Refresh the tweak support files, run the checks as above and return `DESIGN TWEAK REPORT` (each change, what you did, and anything you adjusted or could not do and why).
+`scripts/apply_tweaks.py` has already written the mechanical changes (tokens, fonts, sizes, shape, order, hidden blocks, block versions, backgrounds, text edits) into `index.html`. You get only what it could not do (its `needs_designer` and `cleanup` lists), any held QA findings, and the updated content files: replaced and added library blocks (build them from `blocks-lite/` in the page's style, as in 5.10), notes, contrast failures and CSS cleanup. Use targeted edits, never a full rewrite. Refresh `alternates.html` and `tweak-options.json` for the blocks that changed, run the checks as above and return `DESIGN TWEAK REPORT` (each item, what you did, and anything you adjusted or could not do and why).
 
 ## Never
 
