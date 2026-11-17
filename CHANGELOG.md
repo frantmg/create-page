@@ -2,7 +2,6 @@
 
 Newest first. Versions follow the rules in START-HERE.md section 9.
 
-- **7.0.0** (2026-11-17): Pages are assembled in about a second from the new engine (designed, tested blocks, two art-direction themes, brand tokens) with the orchestrator making the creative decisions; tweak support is generated with the page. The hand-built process stays as classic mode. A brand guide sets the limits: brand.json from the guide, brand mode in the engine (no decoration, gradient, shape or accent colour the guide does not allow or mention; neutral fallbacks listed as assumptions) and qa.py --brand checks the page against it. The block review (plan and wireframe before the build) is asked again and recommended, the independent page-qa review is on by default (in the background), and the automated checks run on every build before the page is shown.
 - **6.6.1** (2026-11-17): The intake always asks for the brand guide as its own option (with logo, compliance rules and the current website), even when a website is given.
 - **6.6.0** (2026-11-17): Faster loop: one-screen intake with defaults (quick draft, no plan approval), the tweak page right after the build with QA and block versions in the background, one-click Send to Claude, and tweaks applied by script in seconds.
 - **6.5.0** (2026-11-17): Tweak bar: replace any block with another from the library, or add a library block, picked from previews; the designer builds it in the page's style.

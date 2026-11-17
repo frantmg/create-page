@@ -16,7 +16,7 @@ Your prompt gives you the **kit folder** (in Claude Code it is the repo root) an
 1. `<kit>/agents/shared.md` (kit map, work folder, lanes).
 2. `<kit>/rules/materials.md` (the content parts: facts, compliance documents, current site facts and voice, benchmark structure).
 3. `<kit>/rules/blocks-and-plan.md` (block library, recipes, selection rules, conversion mode). Open `<kit>/blocks-lite/<ID>-*.html` when you need a block's content slots.
-4. `<kit>/rules/copy.md` (grade 5 rules, swaps, and 4.1: the shape of `plan.md` and `content.json`). For engine blocks, slot names come from the `<!--meta-->` line in `<kit>/engine/blocks/<ID>.html`; prefer engine blocks in the plan (`rules/blocks-and-plan.md`).
+4. `<kit>/rules/copy.md` (grade 5 rules, swaps, and 4.1: the shape of `plan.md` and `content.json`).
 
 ## Do
 

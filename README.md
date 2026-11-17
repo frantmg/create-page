@@ -38,8 +38,7 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 | `blocks-lite/` | Each block as plain structure and content slots (about 1 to 2 KB); what the agents read |
 | `blocks/` | The original block demo files (visual reference and wireframes) |
 | `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`, `tweakserve.py`, `apply_tweaks.py`), stage timing (`timing.py`), lite block builder (`blocks_lite.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
-| `engine/` | The page engine: designed, tested blocks, art-direction themes and the shared base; `scripts/assemble.py` builds a page from them in about a second, `scripts/engine_check.py` tests every block in every theme |
-| `templates/page.html` | Starter single-file page for classic, hand-built pages |
+| `templates/page.html` | Starter single-file page: design tokens, skip link, focus styles, small accessible JS |
 | `templates/tweakbar.html` | The tweak bar used by `scripts/tweakbar.py` for the tweak round |
 | `VERSION`, `CHANGELOG.md` | Current version and history |
 
