@@ -42,6 +42,7 @@ You get `<work>/tweaks.json`, the user's changes from the tweak bar. Your part:
 
 - `copy_edits`: the user's own wording for a slot (`block`, `before`, `after`). Use it as written when it keeps grade 5.9 or lower, the CTA words identical everywhere and compliance intact; otherwise keep their meaning in the closest version that passes and say why.
 - `blocks.order` and `blocks.hidden`: reorder `plan.md` and `content.json`, and remove hidden blocks from both.
+- `blocks.replacements` (for example `"M10": {"block": "M26-A"}`) and `blocks.added` (`{"block": "M10", "after": "M01-B"}`; `after` can be another added block's `new:` id): put each new block in `plan.md` and `content.json` at its place (a replacement takes the old block's place and message) and write all its slots (3.1).
 - `blocks.variants` (for example `"M05-B": "M05-A"`): change the block ID in `plan.md` and `content.json`, and write words for any slot the new version has that the old one did not (check its slots in 3.1).
 - Notes that ask for different words.
 

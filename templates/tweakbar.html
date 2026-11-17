@@ -95,6 +95,16 @@ textarea { resize: vertical; min-height: 56px; }
 .thumb-cap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; font-size: 12px; }
 .thumb-cap b { font-weight: 600; }
 .thumb-cap .in-use { color: var(--tw-accent); font-weight: 600; }
+#lib { width: min(1100px, 94vw); height: min(86vh, 900px); padding: 0; border: 1px solid var(--tw-line); border-radius: 12px; background: var(--tw-panel); color: var(--tw-ink); }
+#lib::backdrop { background: rgb(0 0 0 / .45); }
+#lib[open] { display: flex; flex-direction: column; }
+.lib-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--tw-line); }
+.lib-head h3 { margin: 0; font-size: 15px; }
+.lib-head input { flex: 1; min-width: 180px; }
+.lib-grid { flex: 1; overflow: auto; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; align-content: start; grid-auto-rows: max-content; }
+.lib-card .thumb-cap { flex-direction: column; align-items: flex-start; }
+.lib-card .use { color: var(--tw-muted); }
+.lib-card[hidden] { display: none; }
 .blk .body { padding: 2px 10px 10px; }
 .blk .body .row label { flex: 0 0 82px; color: var(--tw-muted); font-size: 12px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tw-accent); flex: none; }
@@ -202,6 +212,15 @@ textarea { resize: vertical; min-height: 56px; }
     </section>
   </aside>
 </div>
+<dialog id="lib" aria-labelledby="lib-title">
+  <div class="lib-head">
+    <h3 id="lib-title">Block library</h3>
+    <input type="search" id="lib-q" placeholder="Search by name, use or ID" aria-label="Search blocks">
+    <button class="btn ghost" id="lib-close">Close</button>
+  </div>
+  <p class="hint" style="padding:0 14px">Previews show the library's demo styling. The block you choose is built in this page's style when you send your changes.</p>
+  <div class="lib-grid" id="lib-grid"></div>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>const DATA = __TWEAK_DATA__;</script>
@@ -268,6 +287,8 @@ const BLOCKS = [...BASE_MAP].filter(([, e]) => !isG(e)).map(([key, e]) => ({ key
 const GBLOCKS = [...BASE_MAP].filter(([, e]) => isG(e)).map(([key, e]) => ({ key, id: e.getAttribute('data-block'), label: e.tagName === 'HEADER' ? 'Header' : 'Footer' }));
 const ORIG_ORDER = BLOCKS.map(b => b.key);
 const LIB = DATA.block_names || {};
+const LIBRARY = DATA.library || [];
+const LIB_BY_ID = Object.fromEntries(LIBRARY.map(b => [b.id, b]));
 const libName = id => LIB[id] || LIB[id.replace(/-[A-C]$/, '')] || '';
 
 const ALTS = {}; let ALT_CSS = '';
@@ -297,13 +318,18 @@ html.tw-select [data-tw-key]:hover,[data-tw-focus]{outline:3px dashed #C2185B!im
 html.tw-edit [contenteditable]{cursor:text}
 html.tw-edit [contenteditable]:hover{outline:1px dashed #C2185B;outline-offset:2px}
 html.tw-edit [contenteditable]:focus{outline:2px solid #C2185B;outline-offset:2px}
-html.tw-edit [data-tw-edited]{background-image:linear-gradient(rgb(194 24 91 / .12),rgb(194 24 91 / .12))}`;
+html.tw-edit [data-tw-edited]{background-image:linear-gradient(rgb(194 24 91 / .12),rgb(194 24 91 / .12))}
+.tw-planned{display:block;padding:56px 24px;margin:0;text-align:center;background:repeating-linear-gradient(135deg,rgb(194 24 91 / .05) 0 14px,transparent 14px 28px),#fff;outline:2px dashed #C2185B;outline-offset:-12px;font-family:system-ui,sans-serif;color:#18181B}
+.tw-planned p{margin:0 auto;max-width:60ch}
+.tw-planned .tw-pt{margin-bottom:6px;font-size:13px;font-weight:700;color:#C2185B}
+.tw-planned .tw-pn{margin-bottom:6px;font-size:22px;font-weight:700}
+.tw-planned .tw-pu{font-size:14px;color:#5B5B66}`;
 
 /* ── State (kept per page in this browser) ───────────────────────────── */
 const KEY = 'tw:' + DATA.page_hash;
 const fresh = () => ({ palette: '', seedPalette: null, tokens: {}, fonts: null,
   scale: { heading: 1, body: 1, space: 1, radius: 1, shadow: 1 }, gridMax: null, pill: '',
-  order: null, hidden: [], variants: {}, bg: {}, notes: {}, copy: [], note: '' });
+  order: null, hidden: [], variants: {}, bg: {}, notes: {}, copy: [], note: '', replace: {}, added: [] });
 let state = (() => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(fresh(), s, { scale: Object.assign(fresh().scale, s.scale) }); } catch (e) {} return fresh(); })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} refreshSummary(); };
 
@@ -403,7 +429,28 @@ function build(original) {
     const e = map.get(c.key); if (!e || (e.getAttribute('data-tw-variant') || '') !== c.variant) return;
     const n = byPath(e, c.path); if (n) { n.innerHTML = c.afterHtml; n.setAttribute('data-tw-edited', ''); }
   });
+  for (const [key, bid] of Object.entries(state.replace)) {   // replaced blocks: hide the old one, show where the new one goes
+    const e = map.get(key); if (!e) continue;
+    e.setAttribute('data-tw-hidden', ''); e.removeAttribute('data-tw-key');
+    e.after(planned(doc, bid, key, `Replaces ${e.getAttribute('data-block')}`));
+  }
+  state.added.forEach(a => {
+    const ph = planned(doc, a.block, 'new:' + a.uid, 'New block');
+    let ref = doc.querySelector(`[data-tw-key="${CSS.escape(a.after)}"]`);
+    if (!ref) { (doc.querySelector('main') || doc.body).append(ph); return; }
+    while (ref.nextElementSibling && (ref.nextElementSibling.getAttribute('data-tw-key') || '').startsWith('new:')) ref = ref.nextElementSibling;
+    ref.after(ph);
+  });
   return '<!doctype html>\n' + doc.documentElement.outerHTML;
+}
+function planned(doc, bid, key, tag) {
+  const b = LIB_BY_ID[bid] || { name: libName(bid) || bid, use: '' };
+  const s = doc.createElement('section'); s.className = 'tw-planned';
+  s.setAttribute('data-tw-planned', ''); s.setAttribute('data-tw-key', key);
+  const p = (c, t) => { const x = doc.createElement('p'); x.className = c; x.textContent = t; s.append(x); };
+  p('tw-pt', `${tag} · ${bid}`); p('tw-pn', b.name || bid);
+  p('tw-pu', `Built in this page's style when you send your changes.${b.use ? ' Good for: ' + b.use + '.' : ''}`);
+  return s;
 }
 
 const frame = $('#page');
@@ -437,6 +484,7 @@ const MEDIA = 'img,svg,picture,video,input,select,textarea,iframe';
 function editable(d) {
   const out = [];
   d.querySelectorAll('[data-tw-key]').forEach(b => {
+    if (b.hasAttribute('data-tw-planned')) return;
     b.querySelectorAll(BLOCK_TEXT).forEach(e => { if (!e.querySelector(BLOCK_TEXT) && !e.querySelector(MEDIA) && clean(e.textContent)) out.push(e); });
     b.querySelectorAll('a,button,label').forEach(e => { if (!e.closest(BLOCK_TEXT) && !e.querySelector(BLOCK_TEXT) && !e.querySelector(MEDIA) && clean(e.textContent)) out.push(e); });
   });
@@ -613,11 +661,12 @@ function focusBlock(key, on) {
 }
 function blockItem(b, isGBlock) {
   const key = b.key, hidden = state.hidden.includes(key), alts = ALTS[b.id] || [], v = variantOf(key);
-  const changed = hidden || v || state.bg[key] || state.notes[key] || state.copy.some(c => c.key === key && c.variant === v);
+  const rep = !isGBlock && state.replace[key];
+  const changed = hidden || v || rep || state.bg[key] || state.notes[key] || state.copy.some(c => c.key === key && c.variant === v);
   const order = curOrder(), i = order.indexOf(key);
   const shown = v || b.id;
   const sum = el('summary', {}, changed ? el('span', { class: 'dot', title: 'Changed' }) : null,
-    el('span', { class: 'id', text: shown }),
+    el('span', { class: 'id', text: rep ? `${shown} → ${rep}` : shown }),
     el('span', { class: 'txt' }, el('span', { class: 'lib', text: libName(shown) || (isGBlock ? b.label : shown) }), el('span', { class: 'name', text: isGBlock ? '' : `“${b.label}”` })));
   const body = el('div', { class: 'body' });
   if (!isGBlock) {
@@ -626,11 +675,23 @@ function blockItem(b, isGBlock) {
       el('button', { class: 'mini', disabled: i === 0, onclick: () => move(key, -1), 'aria-label': `Move ${b.id} up` }, '↑ Up'),
       el('button', { class: 'mini', disabled: i === order.length - 1, onclick: () => move(key, 1), 'aria-label': `Move ${b.id} down` }, '↓ Down'),
       el('button', { class: 'mini', onclick: () => { state.hidden = hidden ? state.hidden.filter(k => k !== key) : [...state.hidden, key]; save(); renderBlocks(); render(); } }, hidden ? 'Show' : 'Hide')));
+    if (rep) {
+      body.append(el('p', { class: 'hint', text: `Replaced by ${rep}${libName(rep) ? ' · ' + libName(rep) : ''}. It is built in this page's style when you send your changes.` }),
+        libCard(rep, 'Library preview (demo styling)'),
+        el('div', { class: 'actions' },
+          el('button', { class: 'mini', onclick: () => replaceBlock(key) }, 'Choose a different block…'),
+          el('button', { class: 'mini', onclick: () => { delete state.replace[key]; save(); renderBlocks(key); render(); } }, 'Undo replace'),
+          el('button', { class: 'mini', onclick: () => addBelow(key) }, 'Add a block below…')));
+    } else {
     const choose = val => { if (val) state.variants[key] = val; else delete state.variants[key]; save(); renderBlocks(key); render(); };
     const opts = [{ variant: '', id: b.id, label: 'As built' }, ...alts.map(a => ({ variant: a.variant, id: a.variant, label: a.label === a.variant ? '' : a.label }))];
     const thumbs = el('div', { class: 'thumbs', 'data-thumbs': key });
     opts.forEach(o => thumbs.append(thumbCard(key, o, o.variant === v, alts.length ? choose : null)));
-    body.append(el('p', { class: 'hint', text: alts.length ? `Versions of this block (${opts.length}). Click one to use it.` : 'This block. No other versions were built; ask for one in the note.' }), thumbs);
+    body.append(el('p', { class: 'hint', text: alts.length ? `Versions of this block (${opts.length}). Click one to use it.` : 'This block. No other versions were built.' }), thumbs,
+      el('div', { class: 'actions' },
+        el('button', { class: 'mini', onclick: () => replaceBlock(key) }, 'Replace with another block…'),
+        el('button', { class: 'mini', onclick: () => addBelow(key) }, 'Add a block below…')));
+    }
   } else {
     body.append(el('div', { class: 'thumbs', 'data-thumbs': key }, thumbCard(key, { variant: '', id: b.id, label: '' }, true, null)));
   }
@@ -643,11 +704,85 @@ function blockItem(b, isGBlock) {
     el('textarea', { id: 'n-' + key, oninput: e => { const t = e.target.value; if (t.trim()) state.notes[key] = t; else delete state.notes[key]; save(); } }, state.notes[key] || ''));
   body.append(el('div', { class: 'actions' }, el('button', { class: 'mini', onclick: () => { const e = fdoc() && fdoc().querySelector(`[data-tw-key="${CSS.escape(key)}"]`); if (e) e.scrollIntoView({ behavior: 'instant', block: 'start' }); } }, 'Show in page')));
   const d = el('details', { class: 'blk' + (hidden ? ' hidden-blk' : ''), 'data-key': key }, sum, body);
-  d.addEventListener('toggle', () => { if (d.open) d.querySelectorAll('iframe[data-src-key]').forEach(loadThumb); });
+  return wire(d, key);
+}
+function wire(d, key) {
+  d.addEventListener('toggle', () => { if (d.open) { d.querySelectorAll('iframe[data-src-key]').forEach(loadThumb); d.querySelectorAll('iframe[data-lib]').forEach(loadLib); } });
   d.addEventListener('mouseenter', () => focusBlock(key, true));
   d.addEventListener('mouseleave', () => focusBlock(key, false));
   return d;
 }
+/* Blocks added from the library (built by the designer when the changes come back) */
+const addedLabel = k => { const a = state.added.find(x => 'new:' + x.uid === k); return a ? `new ${a.block}` : k; };
+function addedItem(a) {
+  const key = 'new:' + a.uid;
+  const sum = el('summary', {}, el('span', { class: 'dot', title: 'Changed' }), el('span', { class: 'id', text: 'New · ' + a.block }),
+    el('span', { class: 'txt' }, el('span', { class: 'lib', text: libName(a.block) || a.block }), el('span', { class: 'name', text: 'Built in this page’s style when you send your changes' })));
+  const body = el('div', { class: 'body' }, libCard(a.block, 'Library preview (demo styling)'),
+    el('div', { class: 'actions' },
+      el('button', { class: 'mini', onclick: () => openLibrary(`Change new block ${a.block} to…`, id => { a.block = id; save(); renderBlocks(key); render(); }) }, 'Choose a different block…'),
+      el('button', { class: 'mini', onclick: () => addBelow(key) }, 'Add a block below…'),
+      el('button', { class: 'mini', onclick: () => removeAdded(a.uid) }, 'Remove')),
+    el('label', { class: 'hint', for: 'n-' + key, text: 'Note for the designer' }),
+    el('textarea', { id: 'n-' + key, oninput: e => { const t = e.target.value; if (t.trim()) state.notes[key] = t; else delete state.notes[key]; save(); } }, state.notes[key] || ''),
+    el('div', { class: 'actions' }, el('button', { class: 'mini', onclick: () => { const e = fdoc() && fdoc().querySelector(`[data-tw-key="${CSS.escape(key)}"]`); if (e) e.scrollIntoView({ behavior: 'instant', block: 'start' }); } }, 'Show in page')));
+  return wire(el('details', { class: 'blk', 'data-key': key }, sum, body), key);
+}
+function removeAdded(uid) {
+  const a = state.added.find(x => x.uid === uid); if (!a) return;
+  state.added.forEach(x => { if (x.after === 'new:' + uid) x.after = a.after; });
+  state.added = state.added.filter(x => x !== a); delete state.notes['new:' + uid];
+  save(); renderBlocks(); render();
+}
+const shownId = k => (BLOCKS.find(b => b.key === k) || {}).id ? (variantOf(k) || BLOCKS.find(b => b.key === k).id) : addedLabel(k);
+function replaceBlock(key) { openLibrary(`Replace ${shownId(key)} with…`, id => { state.replace[key] = id; save(); renderBlocks(key); render(); }); }
+function addBelow(after) {
+  openLibrary(`Add a block below ${shownId(after)}`, id => {
+    const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    state.added.push({ uid, block: id, after }); save(); renderBlocks('new:' + uid); render(); toast(`${id} added`);
+  });
+}
+/* The block library: demo previews from blocks/, lazy-loaded */
+const LIB_W = 1440;
+const LIB_CSS = '<style>.doc-head,.doc-label,.doc-end{display:none!important}.doc-frame{padding:0!important;overflow:hidden!important}.doc-frame>div{box-shadow:none!important}html,body{margin:0!important;background:#fff!important;overflow:hidden!important}</style>';
+const libHtml = id => { const b = LIB_BY_ID[id]; return b ? b.html.replace(/<\/head>/i, LIB_CSS + '</head>') : ''; };
+function libView(id, max) {
+  const f = el('iframe', { tabindex: '-1', 'aria-hidden': 'true', title: '' });
+  f.style.width = LIB_W + 'px'; f.dataset.lib = id; f.dataset.max = max;
+  return el('div', { class: 'thumb-view' }, f);
+}
+function libCard(id, note) {
+  return el('div', { class: 'thumb' }, libView(id, 260), el('div', { class: 'thumb-cap' }, el('span', {}, el('b', { text: id }), ' ', [libName(id), note].filter(Boolean).join(' · '))));
+}
+function loadLib(f) {
+  if (f.dataset.loaded || !LIB_BY_ID[f.dataset.lib]) return; f.dataset.loaded = '1';
+  f.addEventListener('load', () => {
+    const view = f.parentElement, scale = (view.clientWidth || 300) / LIB_W, d = f.contentDocument;
+    const box = d.querySelector('.doc-frame > div') || d.body, h = Math.ceil(box.getBoundingClientRect().height || d.body.scrollHeight);
+    f.style.height = h + 'px'; f.style.transform = `scale(${scale})`;
+    view.style.height = Math.min(Math.ceil(h * scale), +f.dataset.max) + 'px';
+  });
+  f.srcdoc = libHtml(f.dataset.lib);
+}
+let libPick = null, libObserver = null;
+function buildLibrary() {
+  const grid = $('#lib-grid'); if (grid.childElementCount) return;
+  libObserver = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { loadLib(e.target.querySelector('iframe')); libObserver.unobserve(e.target); } }), { root: grid, rootMargin: '300px' });
+  if (!LIBRARY.length) grid.append(el('p', { class: 'hint', text: 'The block library is not included in this tweak page. Rebuild it with the current kit.' }));
+  LIBRARY.forEach(b => {
+    const view = libView(b.id, 200);
+    const card = el('div', { class: 'thumb pick lib-card', 'data-q': `${b.id} ${b.name} ${b.use}`.toLowerCase() }, view,
+      el('div', { class: 'thumb-cap' }, el('span', {}, el('b', { text: b.id }), ' ', b.name), b.use ? el('span', { class: 'use', text: 'Good for: ' + b.use }) : null,
+        el('button', { class: 'mini', onclick: ev => { ev.stopPropagation(); pickLib(b.id); } }, `Choose ${b.id}`)));
+    card.addEventListener('click', () => pickLib(b.id));
+    grid.append(card); libObserver.observe(view);
+  });
+}
+function openLibrary(title, onPick) { buildLibrary(); libPick = onPick; $('#lib-title').textContent = title; $('#lib-q').value = ''; filterLib(); $('#lib').showModal(); $('#lib-q').focus(); }
+function pickLib(id) { const f = libPick; libPick = null; $('#lib').close(); if (f) f(id); }
+function filterLib() { const q = $('#lib-q').value.trim().toLowerCase(); document.querySelectorAll('.lib-card').forEach(c => { c.hidden = !!q && !c.dataset.q.includes(q); }); }
+$('#lib-q').addEventListener('input', filterLib);
+$('#lib-close').addEventListener('click', () => $('#lib').close());
 /* Mini previews: the block alone, in the page's current styles, scaled down to the panel width */
 const THUMB_W = 1024, THUMB_MAX = 280;
 function previewHtml(key, variant) {
@@ -695,7 +830,11 @@ function move(key, dir) {
 function renderBlocks(openKey) {
   const open = new Set([...document.querySelectorAll('.blk[open]')].map(d => d.dataset.key)); if (openKey) open.add(openKey);
   const byKey = Object.fromEntries(BLOCKS.map(b => [b.key, b]));
-  $('#blocks').replaceChildren(...curOrder().map(k => blockItem(byKey[k], false)));
+  const items = [], placed = new Set();
+  const pushAdded = anchor => state.added.filter(a => a.after === anchor && !placed.has(a.uid)).forEach(a => { placed.add(a.uid); items.push(addedItem(a)); pushAdded('new:' + a.uid); });
+  curOrder().forEach(k => { items.push(blockItem(byKey[k], false)); pushAdded(k); });
+  state.added.filter(a => !placed.has(a.uid)).forEach(a => items.push(addedItem(a)));
+  $('#blocks').replaceChildren(...items);
   $('#gblocks').replaceChildren(...GBLOCKS.map(b => blockItem(b, true)));
   document.querySelectorAll('.blk').forEach(d => { if (open.has(d.dataset.key)) d.open = true; });
 }
@@ -707,7 +846,7 @@ function openBlock(key) {
 
 /* ── Finish tab: summary and export ──────────────────────────────────── */
 function summaryLines() {
-  const L = [], label = k => { const b = BLOCKS.find(x => x.key === k) || GBLOCKS.find(x => x.key === k); return b ? b.key : k; };
+  const L = [], label = k => { if (k.startsWith('new:')) return addedLabel(k); const b = BLOCKS.find(x => x.key === k) || GBLOCKS.find(x => x.key === k); return b ? b.key : k; };
   const p = PALETTES().find(x => x.name === state.palette);
   if (state.palette) L.push(p && p.seed ? `Colours: new palette from ${p.seed}` : `Colours: palette “${state.palette}”`);
   Object.entries(state.tokens).forEach(([k, v]) => L.push(`Colour ${k.replace('--md-sys-color-', '')}: ${v}`));
@@ -718,6 +857,8 @@ function summaryLines() {
   if (state.pill) L.push(`Buttons and pills: ${state.pill}`);
   if (state.order) L.push(`New block order: ${state.order.filter(k => !state.hidden.includes(k)).join(', ')}`);
   state.hidden.forEach(k => L.push(`Hide ${label(k)}`));
+  Object.entries(state.replace).forEach(([k, id]) => L.push(`Replace ${label(k)} with ${id}${libName(id) ? ' (' + libName(id) + ')' : ''}`));
+  state.added.forEach(a => L.push(`Add ${a.block}${libName(a.block) ? ' (' + libName(a.block) + ')' : ''} below ${a.after.startsWith('new:') ? addedLabel(a.after) : label(a.after)}`));
   Object.entries(state.variants).forEach(([k, v]) => L.push(`Swap ${label(k)} to ${v}`));
   Object.entries(state.bg).forEach(([k, v]) => L.push(`${label(k)} background: ${BG[v]}`));
   Object.entries(state.notes).forEach(([k, v]) => L.push(`Note on ${label(k)}: “${clean(v).slice(0, 80)}”`));
@@ -741,6 +882,8 @@ function exportData() {
     },
     blocks: {
       original_order: ORIG_ORDER, order: state.order, hidden: state.hidden, variants: state.variants,
+      replacements: Object.fromEntries(Object.entries(state.replace).map(([k, id]) => [k, { block: id, name: libName(id) || null }])),
+      added: state.added.map(a => ({ id: 'new:' + a.uid, block: a.block, name: libName(a.block) || null, after: a.after })),
       backgrounds: Object.fromEntries(Object.entries(state.bg).map(([k, v]) => [k, BG[v]])), notes: state.notes,
     },
     copy_edits: activeEdits().map(c => ({ block: c.key, variant: c.variant || null, element: c.tag, path: c.path, before: c.beforeText, after: c.afterText })),

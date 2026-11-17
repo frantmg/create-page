@@ -5,7 +5,9 @@ Usage: python3 tweakbar.py <work>/index.html [--alternates <work>/alternates.htm
 
 The tweak bar lets the user try palettes, a new main colour, single colour tokens (with a live WCAG AA contrast
 check), font pairings or any Google font, heading and body size, spacing, corners, shadows, page width and button
-shape; and per block: move, hide, swap to another version, change the background, edit text and leave notes.
+shape; and per block: move, hide, swap to another version, replace it with any block from the library or add a library
+block below it (shown as a marked spot, built by the designer when the changes come back), change the background,
+edit text and leave notes.
 "Finish" exports every change as tweaks.json (copy or download) for the orchestrator to route (START-HERE.md 0.7).
 
 Inputs next to index.html are picked up automatically when present:
@@ -103,17 +105,27 @@ for seed in [s.strip() for s in a.seeds.split(",") if s.strip()]:
     tokens = dict(re.findall(r"(--md-sys-color-[\w-]+):\s*(#[0-9A-Fa-f]{6})", root.group(1))) if root else {}
     if tokens: palettes.append({"name": f"Brand {seed}", "tokens": tokens})
 
+uses = {}
 names = {}   # block ID -> plain name from the library table (rules/blocks-and-plan.md 3.1), shown in the Blocks tab
 for line in (KIT / "rules" / "blocks-and-plan.md").read_text(encoding="utf-8").splitlines():
     cells = [c.strip() for c in line.strip().strip("|").split("|")]
-    if len(cells) >= 2 and re.fullmatch(r"(LP|G\d|M\d{2})(-[A-C])?", cells[0]): names[cells[0]] = cells[1]
+    if len(cells) >= 2 and re.fullmatch(r"(LP|G\d|M\d{2})(-[A-C])?", cells[0]): names[cells[0]] = cells[1]; uses[cells[0]] = cells[2] if len(cells) > 3 else ""
+
+library = []   # every main block's demo from blocks/ (desktop only) for "Replace with" and "Add a block" in the Blocks tab
+for f in sorted((KIT / "blocks").glob("M*.html")):
+    bid = re.match(r"M\d{2}", f.stem).group(0); var = re.search(r"-([A-C])$", f.stem)
+    key = f"{bid}-{var.group(1)}" if var else bid
+    demo = f.read_text(encoding="utf-8")
+    demo = re.sub(r'<div class="doc-label">Mobile.*?</section>', "", demo, flags=re.S)
+    demo = re.sub(r"/\* mobile \*/.*?</style>", "</style>", demo, flags=re.S)
+    library.append({"id": key, "name": names.get(key, names.get(bid, f.stem)), "use": uses.get(key, uses.get(bid, "")), "html": demo})
 
 m = re.search(r"<title>(.*?)</title>", src, re.S | re.I)
 title = html.unescape(m.group(1).strip()) if m else page.parent.name
 data = {
     "page": src, "page_file": str(page), "page_title": title, "page_hash": hashlib.sha1(page.read_bytes()).hexdigest()[:12],
     "kit_version": (KIT / "VERSION").read_text().strip(), "alternates": alternates,
-    "palettes": palettes, "fonts": fonts, "brand_locked": opts.get("brand_locked", {}), "block_names": names,
+    "palettes": palettes, "fonts": fonts, "brand_locked": opts.get("brand_locked", {}), "block_names": names, "library": library,
 }
 # JSON inside <script>: "</" and "<!--" are escaped so the page's own tags cannot close or comment out the script.
 js = json.dumps(data, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\u0021--")

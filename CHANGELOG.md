@@ -2,6 +2,7 @@
 
 Newest first. Versions follow the rules in START-HERE.md section 9.
 
+- **6.5.0** (2026-11-17): Tweak bar: replace any block with another from the library, or add a library block, picked from previews; the designer builds it in the page's style.
 - **6.4.0** (2026-11-17): Content is written by the page-content agent only when the user asks for it; otherwise the page uses placeholder text (lorem ipsum) and skips the content stage. The tweak bar's Blocks tab shows a live preview of each block and its other versions, with plain block names.
 - **6.3.0** (2026-11-17): Faster runs: stage timing, lighter blocks, split instructions, edit-only fixes, fewer QA runs.
 - **6.2.0** (2026-11-17): New tweak round: after the design is done, the user fine-tunes it in a tweak page (colours, fonts, sizes, shape, block order, block versions, backgrounds, text, notes) and the changes go back through the relay.

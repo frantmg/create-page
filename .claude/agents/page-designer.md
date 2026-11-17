@@ -61,7 +61,7 @@ Verify with `--fast` while fixing, then finish with one full run to `<work>/qa/a
 
 ## Tweak rounds
 
-You get `<work>/tweaks.json` (the user's changes from the tweak bar) and the content files page-content has already updated (placeholder pages: apply `copy_edits` yourself, as written). Apply the design side as in `rules/design-build.md` 5.10 (tokens, palette, fonts, sizes, shape, backgrounds, block versions, design notes and contrast failures), using targeted edits, never a full rewrite. A brand change in `brand_overrides` reaches you only after the user confirmed it, so apply it. Refresh the tweak support files, run the checks as above and return `DESIGN TWEAK REPORT` (each change, what you did, and anything you adjusted or could not do and why).
+You get `<work>/tweaks.json` (the user's changes from the tweak bar) and the content files page-content has already updated (placeholder pages: apply `copy_edits` yourself, as written). Apply the design side as in `rules/design-build.md` 5.10 (tokens, palette, fonts, sizes, shape, backgrounds, block versions, replaced and added blocks, design notes and contrast failures), using targeted edits, never a full rewrite. A brand change in `brand_overrides` reaches you only after the user confirmed it, so apply it. Refresh the tweak support files, run the checks as above and return `DESIGN TWEAK REPORT` (each change, what you did, and anything you adjusted or could not do and why).
 
 ## Never
 

@@ -192,6 +192,7 @@ The user finishes the design in the tweak round (START-HERE.md 0.7) with `script
 - `blocks.backgrounds`: restyle the block with the matching token pair (Plain: surface; Light tint: surface-container-low; Tint: surface-container; Brand colour: primary-container; Dark: inverse-surface) and make sure every element inside keeps AA contrast, including buttons and links.
 - `blocks.variants`: move the version's markup and CSS from `alternates.html` into `index.html` in place of the old block, using the latest `content.json`; then move the replaced block into `alternates.html` so the user can switch back.
 - `blocks.hidden` and `blocks.order`: follow the updated `plan.md` (remove hidden sections and their CSS).
+- `blocks.replacements` and `blocks.added`: build each new block from `blocks-lite/` in the page's style, at the place `plan.md` gives (a replacement takes the old block's section and its CSS is removed), with the words from `content.json` (or lorem ipsum on a placeholder page), to the same standard as the first build. Use `blocks/` only to see the layout the user picked.
 - `contrast_failures`: keep the user's choice as close as possible and adjust the failing role's tone until it passes; say what changed.
 - Notes: do what they ask when it is design; send anything about words back as a copy change request.
 
