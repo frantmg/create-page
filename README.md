@@ -20,11 +20,11 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 
 ## How it works
 
-`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents:
+`/create-page` is a small loader skill. It downloads the **latest published release** of this repository and follows `START-HERE.md`, which runs a relay of three agents (for a single landing page, the orchestrator writes the content itself and page-content is skipped):
 
 | Agent | Job |
 |---|---|
-| page-content | Block plan and every word (`content.json`), grade 5, compliance wording |
+| page-content | Block plan and every word (`content.json`), grade 5, compliance wording; for full websites or a full copy review |
 | page-designer | Design and write the single-file `index.html`; never changes the words |
 | page-qa | Independent review; never edits; findings go back to whoever owns them |
 
@@ -34,9 +34,10 @@ Keep patient information out of the chat. Pages contain practice marketing conte
 |---|---|
 | `START-HERE.md` | The orchestrator: intake questions, the relay, delivery, versioning |
 | `rules/` | Materials, block plan, copy, design and build, QA standards |
-| `agents/` | The three agent roles (also in `.claude/agents/` for Claude Code) |
-| `blocks/` | The 47 original block HTML files (structure reference) |
-| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
+| `agents/` | The three agent roles with their full instructions, plus `shared.md` read by all of them (roles also in `.claude/agents/` for Claude Code) |
+| `blocks-lite/` | Each block as plain structure and content slots (about 1 to 2 KB); what the agents read |
+| `blocks/` | The original block demo files (visual reference and wireframes) |
+| `scripts/` | Reading level checker, brand color generator, logo prep (`logo.py`), plan wireframe (`wireframe.py`), tweak page (`tweakbar.py`), stage timing (`timing.py`), lite block builder (`blocks_lite.py`), automated QA (incl. ADA and the logo check), bundled axe-core in `scripts/vendor/` |
 | `templates/page.html` | Starter single-file page: design tokens, skip link, focus styles, small accessible JS |
 | `templates/tweakbar.html` | The tweak bar used by `scripts/tweakbar.py` for the tweak round |
 | `VERSION`, `CHANGELOG.md` | Current version and history |

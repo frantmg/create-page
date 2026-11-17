@@ -1,0 +1,46 @@
+<!-- M29: Appointment form · Offset form card on gray, for referrals and requests
+     Slots: H2; one line; 2 reassurance bullets; phone; fields (first, last, phone, email, location, body area); submit; "Please don't include medical details" note; privacy link
+     Structure and slots only: restyle from the page's tokens (rules/design-build.md 5.7). Visual reference: blocks/M29-Appointment-CTA-with-form.html -->
+<section data-block="M29">
+  <div data-role="tinted-band">
+    <div>
+      <span data-role="eyebrow">Request an appointment</span>
+      <h2>Tell us what's going on. We'll call within one business day.</h2>
+      <div>
+        <span data-role="check-item"><svg data-role="icon" aria-hidden="true"></svg>No referral needed for most plans</span>
+        <span data-role="check-item"><svg data-role="icon" aria-hidden="true"></svg>Same-week visits at [3] locations</span>
+      </div>
+      <div><span>Prefer to talk?</span><span>(555) 555-0123</span></div>
+    </div>
+    <form>
+      <div>
+        <label data-role="field">
+          First name
+          <input type="text" data-role="input">
+        </label>
+        <label data-role="field">
+          Last name
+          <input type="text" data-role="input">
+        </label>
+      </div>
+      <label data-role="field">
+        Phone
+        <input type="tel" data-role="input">
+      </label>
+      <label data-role="field">
+        Email
+        <input type="email" data-role="input">
+      </label>
+      <div data-role="field">
+        Preferred location
+        <div data-role="select">[Downtown office] <span>▾</span></div>
+      </div>
+      <div data-role="field">
+        Where does it hurt?
+        <div data-role="select">Select a body area <span>▾</span></div>
+      </div>
+      <button type="button" data-role="button">Request an appointment</button>
+      <span>Please don't include medical details — we'll discuss your care by phone. <a href="#">Privacy policy</a></span>
+    </form>
+  </div>
+</section>

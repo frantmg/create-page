@@ -2,7 +2,7 @@
 
 ## 2. Read the materials
 
-page-content reads the facts, compliance documents, current site facts and voice, and the benchmark. page-designer reads the logo, brand guide and the current site's look. Both follow the priority rule at the end.
+The content owner (the orchestrator for a single landing page, otherwise page-content) reads the facts, compliance documents, current site facts and voice, and the benchmark. page-designer reads the logo, brand guide and the current site's look. Both follow the priority rule at the end.
 
 - **Logo:** the orchestrator copies it into `<work>/materials/` (from the attachment or the current website) and the brief gives its path, or says `Logo: none`. page-designer always runs `scripts/logo.py` on it: it trims empty space, resizes raster logos to 400px wide at most, writes a data URI (or a cleaned inline SVG), and reports whether the logo is light or dark plus its main color. Embed the result in the header and the footer with `alt="[Practice name] logo"`. A light logo sits only on a dark or brand-color background, never on white. With no logo, use the practice name as a text wordmark in the display font. The logo spot is never empty.
 - **Brand guidelines:** pull the primary brand color (the color seed), any secondary or accent color, the fonts, and voice rules. Brand rules win over the defaults in this kit when they conflict, except the reading level and compliance rules.

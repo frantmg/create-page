@@ -2,6 +2,7 @@
 
 Newest first. Versions follow the rules in START-HERE.md section 9.
 
+- **6.3.0** (2026-11-17): Faster runs: stage timing, lighter blocks, split instructions, edit-only fixes, fewer QA runs.
 - **6.2.0** (2026-11-17): New tweak round: after the design is done, the user fine-tunes it in a tweak page (colours, fonts, sizes, shape, block order, block versions, backgrounds, text, notes) and the changes go back through the relay.
 - **6.1.1** (2026-11-09): Block descriptions now describe the layout only; references to outside sites removed.
 - **6.1.0** (2026-11-09): Plan approval now shows a wireframe built from the library blocks.

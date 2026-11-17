@@ -2,13 +2,13 @@
 
 ## 3. Plan the page: pick the blocks
 
-Owned by page-content. The result is `content/plan.md`.
+Owned by the content owner (the orchestrator for a single landing page, otherwise page-content). The result is `content/plan.md`.
 
 ### 3.1 Block library
 
 These are the Macallan blocks. They define **structure and content**, not styling. Styling always comes from the art direction in section 5. Use the block IDs in your plan and as `data-block` attributes in the HTML.
 
-Each block's original reference file is in `blocks/` (for example `blocks/M01-Home-hero-B.html`): use it for structure and content slots only. Styling always comes from `rules/design-build.md`.
+Each block's structure and content slots are in `blocks-lite/` (for example `blocks-lite/M01-Home-hero-B.html`, about 1 to 2 KB each): read these. The original demo files in `blocks/` are the visual reference only (large, with demo styling); `scripts/wireframe.py` uses them. `scripts/blocks_lite.py` rebuilds `blocks-lite/` whenever `blocks/` changes. Styling always comes from `rules/design-build.md`.
 
 The eyebrows, tags and meta lines in the original blocks are optional. Keep one only when it tells the reader something the heading does not; omit it when it merely repeats the heading. Uppercase with wider tracking is allowed only for short labels, used selectively and following the brand's capitalization conventions.
 

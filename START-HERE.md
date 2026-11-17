@@ -2,13 +2,13 @@
 
 You are reading the page builder kit. If the user asked for a page and you were sent here (by the `/create-page` loader skill, a pasted repo link, or Claude Code opened in this repo), you are the **orchestrator**: follow this file from section 0.
 
-**Kit version 6.2.0** (see `VERSION` and `CHANGELOG.md`)
+**Kit version 6.3.0** (see `VERSION` and `CHANGELOG.md`)
 
 Builds landing pages and website pages for healthcare practices (home, specialty, condition, location, provider, about, insurance, testimonials, contact). Pages are assembled from the Macallan block library below, art-directed with the `frontend-design` approach (a distinct visual identity per practice, no generic AI look), built as one plain HTML file on Material Design logic (no build tools or installs), and written at a 5th-grade reading level, because plain copy converts best.
 
-This kit runs as a relay: the **orchestrator** (you, in the user's conversation) runs the intake and the relay, the **page-content** agent writes the plan and every word, the **page-designer** agent designs and builds, and the **page-qa** agent reviews independently. Section 0 says who does what. Do not skip the intake gate.
+This kit runs as a relay: the **orchestrator** (you, in the user's conversation) runs the intake and the relay and writes the content of a single landing page itself, the **page-content** agent writes the plan and every word for full websites (or when the user asks for a full copy review), the **page-designer** agent designs and builds, and the **page-qa** agent reviews independently. Section 0 says who does what. Do not skip the intake gate. Agents never read this file: each reads `agents/shared.md` and its own role file.
 
-0. How this runs (roles, brief, the relay, fix routing, the tweak round)
+0. How this runs (roles, brief, who writes the content, timing, the relay, fix routing, the tweak round)
 1. Intake (gate)
 2. Read the materials
 3. Plan the page: pick the blocks
@@ -26,20 +26,22 @@ Section numbers used anywhere in this kit point to these files:
 
 | Section | File |
 |---|---|
-| 0, 1, 7, 9 (0.7 tweak round) | `START-HERE.md` (this file) |
+| 0, 1, 7, 9 (0.7 tweak round) | `START-HERE.md` (this file, the orchestrator's) |
 | 2 | `rules/materials.md` |
 | 3 (3.1 to 3.4) | `rules/blocks-and-plan.md` |
-| 4 | `rules/copy.md` |
-| 5 (5.1 to 5.9) | `rules/design-build.md` |
+| 4 (4.1 content files) | `rules/copy.md` |
+| 5 (5.1 to 5.10) | `rules/design-build.md` |
 | 6 (6.1 to 6.3) | `rules/qa.md` |
 | 8.1 / 8.2 / 8.3 | `scripts/readability.py` / `scripts/m3_scheme.py` / `scripts/qa.py` |
 | 8.5 | `scripts/logo.py` (trims, resizes and embeds the logo; reports light or dark and its main color) |
 | 8.4 | `templates/page.html` (copy it to `<work>/index.html`) |
 | 8.6 | `scripts/wireframe.py` (stacks the planned blocks from `blocks/` into `<work>/wireframe.html` for plan approval) |
 | 8.7 | `scripts/tweakbar.py` + `templates/tweakbar.html` (makes `<work>/tweak.html`: the page with a tweak bar, for the tweak round in 0.7) |
+| 8.8 | `scripts/timing.py` (records each stage's start and end in `<work>/timing.md`, 0.5) |
+| 8.9 | `scripts/blocks_lite.py` (rebuilds `blocks-lite/` from `blocks/`; run it after changing a block) |
 | axe-core | `scripts/vendor/axe.min.js` (bundled, with its `LICENSE`) |
-| Block reference HTML | `blocks/<ID>-*.html` (structure and content reference only; never their styling) |
-| Agent roles | `agents/content.md`, `agents/designer.md`, `agents/qa.md` |
+| Blocks | `blocks-lite/<ID>-*.html`: structure and content slots, about 1 to 2 KB each (read these). `blocks/<ID>-*.html`: the visual demos, for the wireframe and for looking at a layout only; never their styling |
+| Agent roles | `agents/shared.md` (read by every agent) plus `agents/content.md`, `agents/designer.md`, `agents/qa.md` (each agent's full instructions; also in `.claude/agents/`) |
 
 Run scripts from the kit, for example `python3 <kit>/scripts/qa.py <work>/index.html --axe <kit>/scripts/vendor/axe.min.js --brand-fonts "Brand Font"`. Never edit the kit while building a page; client work goes in the work folder.
 
@@ -53,12 +55,12 @@ The page is made by a relay: content first, then design, then an independent rev
 
 | Role | Who | Owns | Hands off | Never |
 |---|---|---|---|---|
-| Orchestrator | The main conversation (when the user runs `/create-page` or asks for a page) | Section 1 intake, the brief, running the relay and fix routing (0.6), delivery (section 7) | Brief to page-content | Writes copy or builds the page when the agents are available |
-| page-content | Agent (`page-content`) | Sections 2 (facts, compliance, current site, benchmark), 3 and 4: block plan, every word, compliance wording, placeholders | `content/plan.md` + `content/content.json` | Touches layout, styles or code |
+| Orchestrator | The main conversation (when the user runs `/create-page` or asks for a page) | Section 1 intake, the brief, stage timing (0.5), running the relay and fix routing (0.6), delivery (section 7); for a single landing page also the content (0.3) | Brief (and content files) to page-designer | Builds the page when the agents are available |
+| page-content | Agent (`page-content`), for full websites or a full copy review (0.3) | Sections 2 (facts, compliance, current site, benchmark), 3 and 4: block plan, every word, compliance wording, placeholders | `content/plan.md` + `content/content.json` | Touches layout, styles or code |
 | page-designer | Agent (`page-designer`) | Sections 2 (brand, logo, current site look), 5 and 6.1: design plan, build, mobile, ADA build quality | `<work>/index.html` | Changes any word; it sends a copy change request instead |
 | page-qa | Agent (`page-qa`), fresh for every review | Section 6 in full | QA report | Edits anything, sees the other agents' notes |
 
-If you were started by the user (or by `/create-page`), you are the orchestrator. If your prompt says you are page-content, page-designer or page-qa, follow 0.3, 0.4 or 0.5.
+If you were started by the user (or by `/create-page`), you are the orchestrator. If your prompt says you are page-content, page-designer or page-qa, stop reading this file: follow `agents/shared.md` and your role file in `agents/`.
 
 ### 0.2 The brief
 
@@ -77,6 +79,7 @@ Then write `<work>/brief.md`. It is the only thing the relay starts from, so it 
 - Keyword: ...  - Traffic: ...  - Lead flow: ...  - Proof available: ...   (conversion mode)
 - Plan approval: approved plan below / build directly
 - Review mode: full review / quick draft (automated checks only)
+- Content owner: orchestrator (single landing page) / page-content (website, or the user asked for a full copy review)
 - Brand fonts: ... or none given
 - Logo: <absolute path in <work>/materials/> (attached / from the current website) or none
 - Other materials (absolute paths in <work>/materials/): brand guide ..., compliance docs ..., photos ... (or none)
@@ -86,82 +89,45 @@ Then write `<work>/brief.md`. It is the only thing the relay starts from, so it 
 - Work folder: <absolute path>
 ```
 
-### 0.3 page-content mode
+### 0.3 Who writes the content
 
-Skip section 1. Read the brief; if a required field is missing, return `BRIEF INCOMPLETE` with the list and stop. Do the content parts of section 2 (practice facts, compliance documents, current website facts and voice, benchmark structure takeaways), then section 3 (block plan; use the approved plan if the brief has one) and section 4 (every word). Write two files in `<work>/content/`:
+- **A single landing page:** the orchestrator writes the content itself, because it already has the intake answers. Do the content parts of section 2 (practice facts, compliance documents, current website facts and voice, benchmark structure takeaways), section 3 (block plan; read block slots in `blocks-lite/`) and section 4 (every word, following `rules/copy.md`), and write `<work>/content/plan.md` and `<work>/content/content.json` as in 4.1. Run `python3 <kit>/scripts/readability.py <work>/content/content.json` and fix every block marked `FIX` before the designer starts. In fix, copy change and tweak rounds, you make the content changes yourself with targeted edits, under the same rules as page-content (`agents/content.md`).
+- **page-content** writes the content for a full website (every page), or for any page when the user asks for a full review of the copy. Start it with the brief path; it returns `CONTENT REPORT`, `CONTENT FIX REPORT` or `CONTENT TWEAK REPORT`.
 
-- `plan.md`: the ordered block list, one block per line starting with its number and full block ID including the variant (for example `2. M01-B: Message 1 · Seen this week`), with the message it carries; benchmark ideas used go on lines after the list. `scripts/wireframe.py` reads this list.
-- `content.json`: every word on the page, in this shape:
+Record the choice as `Content owner` in the brief. "Content owner" in this kit means whichever of the two applies.
 
-```json
-{
-  "meta": { "page_title": "", "meta_description": "", "cta_primary": "", "cta_secondary": "", "keyword": "" },
-  "blocks": [
-    { "id": "M01-B", "message": "1", "slots": { "h1": "", "who": "", "bullets": [""], "cta": "", "image_brief": "Photo: doctor with patient, 4:5" } }
-  ],
-  "legal": { "disclaimer": "", "before_after_disclosure": "", "form_note": "Please don't include medical details." },
-  "placeholders": ["[City]"],
-  "compliance_notes": ["what you could not confirm and why"]
-}
-```
+### 0.4 The agents' instructions
 
-Slot names follow the block's content slots in 3.1 (headline, bullets, steps, faq items, and so on). Image needs go in `image_brief` slots so the designer knows what each photo should show. Run `scripts/readability.py` on `content.json` and fix every block marked `FIX`. Return:
+Each agent's full mode (inputs, what to do, report format, fix and tweak rounds) is in its role file: `agents/content.md`, `agents/designer.md`, `agents/qa.md`, plus the short shared section in `agents/shared.md`. Agents read only those files and the rules their role file lists, never this file. Their reports: `CONTENT REPORT` / `CONTENT FIX REPORT` / `CONTENT TWEAK REPORT`, `DESIGN REPORT` / `DESIGN FIX REPORT` / `DESIGN TWEAK REPORT` (with `COPY CHANGE REQUEST`s), and the QA report in `rules/qa.md` 6.3.
 
-```
-CONTENT REPORT
-Files: <plan.md path>, <content.json path>
-Block plan: <ordered block IDs and the message each carries>
-Reading grade: <page grade, every block OK>
-Placeholders: <list>     Compliance notes: <list>
-```
+### 0.5 Stage timing
 
-In a fix round you receive findings or copy change requests. Change only what they ask, keep the grade at 5.9 or lower, and return `CONTENT FIX REPORT` (each finding or request ID, what changed, or why not).
-
-### 0.4 page-designer mode
-
-Skip sections 1, 3 and 4. Read the brief, `plan.md` and `content.json`. Do the design parts of section 2 (logo, brand guide, the current website's look), run `scripts/logo.py` on the brief's logo, then section 5: design plan, review, build. Write `<work>/index.html` from `templates/page.html` and the blocks, copying every word from `content.json` exactly; never type, cut or reword copy in the markup. Also write the tweak support files (5.10): `<work>/alternates.html` (other versions of the planned blocks, in the page's own style) and `<work>/tweak-options.json` (alternate palettes and font pairings). If the copy does not fit the design (a headline too long for the hero, too many bullets for a block, a missing slot), do not change it: return a `COPY CHANGE REQUEST` with the block ID, slot, the problem and the limit (for example "M01-B h1: 9 words wraps to 4 lines on 390px; max 6 words"). Run the automated checks in 6.1 and fix design-side failures. Return:
-
-```
-DESIGN REPORT
-Preview: <path to <work>/index.html>   Size: <KB>   Screenshots: <paths>
-Design direction: <palette, type pairing, the memorable element>
-Automated checks: <pass/fail summary from qa.py>
-Copy change requests: <list or none>
-Logo: <embedded image or text wordmark; light or dark; the background it sits on>
-Tweak support: <alternates built per block, palettes, font pairings>
-Flags: <font, asset or brand issues the designer could not resolve>
-```
-
-In a fix round, fix the design, mobile and ADA findings sent to you in `<work>/index.html`, bring in any updated copy from `content.json`, rerun 6.1, and return `DESIGN FIX REPORT` (each finding ID, what changed, or why not). Minor findings are fixed directly and are not re-reviewed.
-
-In a tweak round (0.7) you get `<work>/tweaks.json` and the updated content files: apply the design side as in 5.10, rerun 6.1 and return `DESIGN TWEAK REPORT` (each change, what you did, and anything you adjusted or could not do and why).
-
-### 0.5 page-qa mode
-
-You review a page you did not make. You get the preview path, the brief and the client's materials, nothing else. Stay read-only (scratch files in `/tmp/qa/`). Follow section 6 completely and return the report in 6.3. In a re-review you also get the list of findings that failed last round: re-check only those, plus the automated checks in 6.1, and return the same report format.
+Record the start and end of every stage so the real bottleneck shows: `python3 <kit>/scripts/timing.py <work> start <stage>` and `... end <stage>`, with the stages `intake`, `wireframe`, `content`, `design`, `qa`, `fixes`, `tweak` and `deliver` (repeat runs are numbered automatically). The intake starts before the work folder exists: note `date -Iseconds` when you start it and record it later with `--at`. Each call rewrites `<work>/timing.md` (one row per stage run, totals per stage, the total time and the slowest stage). `timing.py <work> report` prints it for the final summary (section 7).
 
 ### 0.6 Orchestration: the relay
 
-1. **Intake** (section 1). If the user chose to approve the plan first, start page-content with an instruction to return only `plan.md`. Then run `python3 <kit>/scripts/wireframe.py <work>/content/plan.md --title "<Practice> <page type>"`, send `<work>/wireframe.html` to the user (section 7) together with the short plan list, and ask with a guided question (Approve plan · Change something). If the user changes the plan, have page-content update `plan.md`, rebuild the wireframe and ask again. Record the approved plan in the brief.
-2. **Brief:** write `brief.md` (0.2), including the review mode from the intake (full review by default).
-3. **Content:** start `page-content` with the brief path. Wait for its `CONTENT REPORT`. If `BRIEF INCOMPLETE`, ask the user and restart.
-4. **Design:** start `page-designer` with the brief path and the two content files. If it returns copy change requests, send them to page-content (continue the same agent with SendMessage if available, otherwise start a new one with the brief, content files and requests), then send the updated content back to page-designer. At most 2 copy round trips; after that, the designer adapts the layout to the copy.
+Time every step (0.5).
+
+1. **Intake** (section 1). If the user chose to approve the plan first, have the content owner write only `plan.md` (yourself for a single landing page; otherwise page-content, told to return only `plan.md`). Then run `python3 <kit>/scripts/wireframe.py <work>/content/plan.md --title "<Practice> <page type>"`, send `<work>/wireframe.html` to the user (section 7) together with the short plan list, and ask with a guided question (Approve plan · Change something). If the user changes the plan, update `plan.md` (or have page-content do it), rebuild the wireframe and ask again. Record the approved plan in the brief.
+2. **Brief:** write `brief.md` (0.2), including the review mode from the intake (full review by default) and the content owner (0.3).
+3. **Content:** for a single landing page, write `plan.md` and `content.json` yourself (0.3). Otherwise start `page-content` with the brief path and wait for its `CONTENT REPORT`; if `BRIEF INCOMPLETE`, ask the user and restart.
+4. **Design:** start `page-designer` with the brief path and the two content files. If it returns copy change requests, the content owner handles them (you, or page-content: continue the same agent with SendMessage if available, otherwise start a new one with the brief, content files and requests), then send the updated content back to page-designer. At most 2 copy round trips; after that, the designer adapts the layout to the copy.
 5. **First draft to the user, right away:** as soon as `<work>/index.html` exists, send it to the user (as in section 7) with the line "First draft, QA is running." Do not wait for the review.
 6. **Quick draft mode** (the user chose "Quick draft" in the intake): skip steps 7 to 9. Run the tweak round (step 10), then deliver the page with the designer's automated check results (qa.py and readability.py) and say clearly that no independent review ran.
-7. **QA:** start a **fresh** `page-qa` with only the preview path, the brief path and the material paths. Never pass the other agents' reports or notes.
+7. **QA:** start a **fresh** `page-qa` with only the preview path, the brief path, the material paths and the automated results path (`<work>/qa/auto.json`, the designer's final full qa.py run; page-qa reuses it when the page has not changed, so qa.py runs once). Never pass the other agents' reports or notes.
 8. **Fix routing:** if the verdict is FAIL, split the findings by owner:
-   - **page-content:** area A (copy, brief, reading level, CTA words), area B wording (claims, disclaimers, placeholders, form note), area F order and plan.
+   - **content owner:** area A (copy, brief, reading level, CTA words), area B wording (claims, disclaimers, placeholders, form note), area F order and plan.
    - **page-designer:** areas C (design quality), D (mobile), E (ADA), area B items that are build issues (tracking scripts, form markup, legal links missing from the footer layout).
-   - A finding that needs both goes to page-content first, then page-designer.
-   - Send **minor** findings too: the owner fixes them directly, and they are not re-reviewed.
-   Content fixes run first, then the designer updates `index.html` with the new `content.json` plus its own fixes.
-9. **Re-review:** start a **new** page-qa with the preview, brief and material paths plus the list of blocker and major findings that failed. It re-checks only those findings plus the automated checks (6.1). **Default is 1 fix round.** Run a second round only if blockers remain; remaining majors are reported at delivery.
+   - A finding that needs both goes to the content owner first, then page-designer.
+   - Send **minor** and **mechanical** findings too (6.3): the owner fixes them directly, and they are not re-reviewed.
+   Content fixes run first, then the designer updates `index.html` with the new `content.json` plus its own fixes. **Fixes are edits, not rebuilds:** the designer changes only the parts of `index.html` the findings name, with targeted edits, and finishes with one full qa.py run to `<work>/qa/auto.json`.
+9. **Re-review, only for blockers:** if the round had blocker findings, start a **new** page-qa with the preview, brief, material and automated results paths plus the list of blockers and judgment majors from that round. It re-checks only those findings plus the automated results (6.1). With no blockers, there is no re-review: the fixes stand on the owners' checks and are reported at delivery as fixed without re-review. **Default is 1 fix round.** Run a second round only if blockers remain; remaining majors are reported at delivery.
 10. **Tweak round** (0.7): once the design is done, give the user the tweak page to fine-tune it, and apply what they send back.
 11. **Deliver** (section 7) with the final QA report. If blockers or majors remain, say so first and list them; never present a failing page as passing. Delivery is not done until the page is published or the user was told why it couldn't be.
 
 Tell the user one line when each stage starts (writing content, designing, first draft sent, reviewing, fixing, tweaking); keep the task list updated.
 
-**Starting the agents.** If named agents `page-content`, `page-designer` and `page-qa` are installed (Claude Code opened in this repo loads them from `.claude/agents/`), use them. Otherwise start `general-purpose` agents with the prompt: "Read `<kit>/agents/content.md` and follow it. Kit folder: `<kit>`. Brief: `<work>/brief.md`." (or `designer.md`, `qa.md`), always passing the absolute kit and work paths. If no agent tool exists at all, do each stage yourself in order, keeping the same files and lane rules, do the QA as a separate clean pass reading only the page, brief and materials, and tell the user the review was not independent.
+**Starting the agents.** If named agents `page-content`, `page-designer` and `page-qa` are installed (Claude Code opened in this repo loads them from `.claude/agents/`), use them. Otherwise start `general-purpose` agents with the prompt: "Read `<kit>/agents/shared.md` and `<kit>/agents/content.md` and follow them. Kit folder: `<kit>`. Brief: `<work>/brief.md`." (or `designer.md`, `qa.md`), always passing the absolute kit and work paths. If no agent tool exists at all, do each stage yourself in order, keeping the same files and lane rules, do the QA as a separate clean pass reading only the page, brief and materials, and tell the user the review was not independent.
 
 ### 0.7 The tweak round
 
@@ -173,14 +139,16 @@ After the design is done (the QA verdict in step 9, or the build in quick draft 
 4. **Receive:** save what they paste to `<work>/tweaks.json` (round 2: `tweaks-2.json`, and so on). Check its `page_hash` against the current `index.html` (`python3 -c "import hashlib,sys;print(hashlib.sha1(open(sys.argv[1],'rb').read()).hexdigest()[:12])" <work>/index.html`); if they differ, the tweaks were made on an older version: say so and apply them carefully. Show the `summary` lines back in one short list.
 5. **Confirm brand changes:** if `brand_overrides` is not empty (the brief fixed the brand colours or fonts and the user changed them), ask with a guided question (Use my change · Keep the brand) before routing.
 6. **Route** (same lanes as 0.6):
-   - **page-content first:** `copy_edits` (as copy change requests: keep the user's meaning, grade 5.9 or lower and compliance; if a change cannot be kept as written, use the closest version that passes and say why), `blocks.order`, `blocks.hidden` (remove those blocks from `plan.md` and `content.json`), `blocks.variants` (change the block ID in `plan.md` and `content.json`, and fill any slots the new version has that the content lacks), and notes that ask for different words. It returns `CONTENT TWEAK REPORT`.
-   - **page-designer next:** everything in `design`, `blocks.variants` and `blocks.backgrounds`, design notes, `contrast_failures`, and the updated content files. It applies them as in 5.10 and returns `DESIGN TWEAK REPORT`.
-7. **Check:** the designer's 6.1 run is always required. In full review mode, if blocks or words changed (order, hidden, variants, copy edits), start a **fresh** page-qa limited to the changed blocks plus 6.1; changes to the design only (colours, fonts, sizes, shape, backgrounds) need 6.1 only. Route any findings as in 0.6 step 8.
+   - **Content owner first** (you for a single landing page, otherwise page-content): `copy_edits` (as copy change requests: keep the user's meaning, grade 5.9 or lower and compliance; if a change cannot be kept as written, use the closest version that passes and say why), `blocks.order`, `blocks.hidden` (remove those blocks from `plan.md` and `content.json`), `blocks.variants` (change the block ID in `plan.md` and `content.json`, and fill any slots the new version has that the content lacks), and notes that ask for different words. page-content returns `CONTENT TWEAK REPORT`.
+   - **page-designer next:** everything in `design`, `blocks.variants` and `blocks.backgrounds`, design notes, `contrast_failures`, and the updated content files. It applies them as in 5.10 with targeted edits and returns `DESIGN TWEAK REPORT`.
+7. **Check:** the designer's 6.1 run is always required. In full review mode, if blocks or words changed (order, hidden, variants, copy edits), start a **fresh** page-qa limited to the changed blocks plus the automated results (`<work>/qa/auto.json`); changes to the design only (colours, fonts, sizes, shape, backgrounds) need 6.1 only. Route any findings as in 0.6 step 8.
 8. **Next round:** rebuild `tweak.html` from the new `index.html` (its saved changes start fresh because the page changed), show it again and ask again. There is no round limit; the user decides when it is done. Then deliver (section 7) and mention what each tweak round changed.
 
 ---
 
 ## 1. Intake (gate)
+
+Note the start time first (`date -Iseconds`) for the stage timing (0.5).
 
 Ask with **guided questions**: the `AskUserQuestion` tool, which shows clickable options and always lets the user type their own answer ("Other"). Ask in rounds, not as one long text message. Do not plan, write or build until Round 1 and Round 2 are answered.
 
@@ -249,6 +217,7 @@ Note in the Materials question that anything not shared becomes a `[placeholder]
 - Send the screenshots only if the user wants a quick look.
 - Add `<!-- Built with create-page vX.Y.Z -->` (the kit version from `VERSION`) as the first line inside `<head>` of every page's `index.html` (`templates/page.html` already has the line; set the version).
 - In conversion mode, also give: a pre-launch compliance checklist (disclaimers, before/after disclosures and consent, review authenticity, HIPAA-compliant form processing, no tracking pixels on the form without a BAA) for the team to tick before launch, and a message-match line (keyword → H1 → 2 or 3 matching ad headlines) so the ad and page stay aligned.
+- Include the stage timing: end the `deliver` stage, then paste the totals from `python3 <kit>/scripts/timing.py <work> report` (minutes per stage, total time, slowest stage).
 - Finish with a short note: the kit version, the design direction in one line (palette, type pairing, the memorable element), the block plan used (and the benchmark ideas it borrowed, if any), the page's reading grade, the list of `[placeholders]` the practice must fill, and any compliance flags.
 - Offer next steps as options, for example: another tweak round, A/B variant of the hero, another page from the sitemap, or a dark theme.
 

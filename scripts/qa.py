@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Automated page QA. Usage: python3 qa.py <work>/index.html [--axe path/to/axe.min.js] [--brand-fonts "Inter,Lato"]
+"""Automated page QA. Usage: python3 qa.py <work>/index.html [--axe path/to/axe.min.js] [--brand-fonts "Inter,Lato"] [--fast] [--out <work>/qa/auto.json]
+--fast checks 390 and 1440px only (for self-checks while working); the full run (no --fast) is the final one per stage.
+--out also saves the JSON (with page_hash and run type) so page-qa can reuse it when the page has not changed.
 Checks at 320 (WCAG reflow), 390, 768, 1024, 1440px: horizontal overflow, small tap targets, small input text.
 Runs axe-core (WCAG 2.2 A/AA) from the kit's scripts/vendor/axe.min.js by default. Reports loaded fonts,
 phone first-screen contents, H1 count, CTA labels, em dashes and file size. Logo check at 390 and 1440px: the header
@@ -9,11 +11,14 @@ rows wider than their text column; at 1440px, items in one row (steps, cards, st
 by more than 2px. Style check: uppercase on buttons, a.btn and nav links, cliché main fonts (rules/design-build.md 5.3)
 unless listed in --brand-fonts. Tweak leftovers: tweak bar code (data-tw- attributes, tweak data) found in the page.
 Saves screenshots at 390 and 1440px."""
-import json, base64, pathlib, argparse
+import json, base64, pathlib, argparse, hashlib
 from playwright.sync_api import sync_playwright
 ap=argparse.ArgumentParser(); ap.add_argument("file"); ap.add_argument("--axe",default=str(pathlib.Path(__file__).resolve().parent/"vendor"/"axe.min.js"))
 ap.add_argument("--brand-fonts",default="",help="comma-separated brand fonts from the brief; never flagged as clichés")
-a=ap.parse_args(); f=pathlib.Path(a.file).resolve(); out={}
+ap.add_argument("--fast",action="store_true",help="390 and 1440px only (self-checks); final runs leave it off")
+ap.add_argument("--out",default="",help="also write the JSON results to this file")
+a=ap.parse_args(); f=pathlib.Path(a.file).resolve()
+out={"page_hash":hashlib.sha1(f.read_bytes()).hexdigest()[:12],"run":"fast" if a.fast else "full"}
 PROBE="""() => {
  const vis=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'};
  const small=[...document.querySelectorAll('a,button,input,select,textarea,[role=button]')].filter(vis)
@@ -135,7 +140,7 @@ def check_logo(pg, region):
 
 with sync_playwright() as p:
     b=p.chromium.launch()
-    for w in (320,390,768,1024,1440):
+    for w in ((390,1440) if a.fast else (320,390,768,1024,1440)):
         pg=b.new_page(viewport={"width":w,"height":900}); pg.goto(f.as_uri()); pg.wait_for_timeout(600)
         out[f"w{w}"]=pg.evaluate(PROBE)
         if w in (390,1440):
@@ -176,4 +181,7 @@ with sync_playwright() as p:
 out["file_size_kb"]=round(f.stat().st_size/1024,1)
 src=f.read_text(encoding="utf-8",errors="ignore")
 out["tweak_leftovers"]=[m for m in ("data-tw-","tw-tokens","tw-base","const DATA =") if m in src]   # tweak bar code must never reach the page
-print(json.dumps(out,indent=1))
+res=json.dumps(out,indent=1)
+if a.out:
+    o=pathlib.Path(a.out); o.parent.mkdir(parents=True,exist_ok=True); o.write_text(res,encoding="utf-8")
+print(res)
