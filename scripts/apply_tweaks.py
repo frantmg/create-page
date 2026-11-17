@@ -60,19 +60,20 @@ JS = r"""
   // 1. Tokens into the first :root block
   const tokens = {};
   for (const [k, v] of Object.entries(design.tokens || {})) tokens[k] = { from: v.from, to: seedTokens[k] || v.to };
-  const rootRe = /:root\s*\{([^}]*)\}/;
-  const rm = css.match(rootRe);
-  if (rm) {
-    let block = rm[1];
+  // every :root block; a token is written where it is defined last (later blocks win), new tokens go in the last one
+  const roots = [...css.matchAll(/:root\s*\{([^}]*)\}/g)].map(m => ({ start: m.index, text: m[0], body: m[1] }));
+  if (roots.length) {
     for (const [k, { from, to }] of Object.entries(tokens)) {
       const sm = /^calc\((.*) \* ([\d.]+)\)$/.exec(to || '');
       const val = sm && from ? scale(from, +sm[2]) : to;
       if (val == null) continue;
       const re = new RegExp('(' + esc(k) + '\\s*:\\s*)([^;]+)(;)');
-      if (re.test(block)) block = block.replace(re, (m, x, y, z) => x + val + z); else block = block.replace(/\s*$/, `\n  ${k}: ${val};\n`);
+      let i = roots.length - 1; while (i > 0 && !re.test(roots[i].body)) i--;
+      const r = roots[i];
+      r.body = re.test(r.body) ? r.body.replace(re, (m, x, y, z) => x + val + z) : r.body.replace(/\s*$/, `\n  ${k}: ${val};\n`);
       R.applied.push(`token ${k}: ${val}`);
     }
-    css = css.replace(rootRe, () => ':root {' + block + '}');
+    for (let i = roots.length - 1; i >= 0; i--) { const r = roots[i]; css = css.slice(0, r.start) + ':root {' + r.body + '}' + css.slice(r.start + r.text.length); }
   } else if (Object.keys(tokens).length) R.needs_designer.push('No :root token block found; apply design.tokens by hand');
 
   // 2. Fonts

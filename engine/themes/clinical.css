@@ -29,6 +29,7 @@
   --final-btn-bg: var(--tone-95);
   --final-btn-fg: var(--tone-20);
   --final-focus: var(--tone-90);
+  --final-grain: .08;
   --story-bg: var(--md-sys-color-surface-container);
   --story-fg: var(--md-sys-color-on-surface);
   --story-accent: var(--md-sys-color-primary);

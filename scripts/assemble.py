@@ -9,7 +9,12 @@ build.json holds the creative decisions (START-HERE.md 0.3 v7):
    "ornament": "contour|arcs|dots|none", "cta_shape": "leaf|pill|soft|square", "media_shape": "cut|round|soft|square",
    "logo": "<work>/materials/logo.datauri.txt", "logo_tone": "dark|light", "content": "placeholder|written",
    "page_title": "...", "meta_description": "...", "tokens": {"--name": "value"}, "extra_css": "<work>/signature.css",
-   "photos": {"M01-B": "<url or data URI>"}, "brand_locked": {"colors": false, "fonts": false}}
+   "photos": {"M01-B": "<url or data URI>"}, "brand_locked": {"colors": false, "fonts": false}, "brand": "<work>/brand.json"}
+Brand mode: when <work>/brand.json exists (written from the brand guide, rules/materials.md), the guide decides the look:
+its colours, fonts and corner style are used; anything the guide does not allow, or does not mention, falls back to the
+most neutral option (even corners, no ornament, no grain, solid colour instead of gradients, no invented accent colour),
+and build.json's ornament and shape choices are ignored unless brand.json lists them under "approved". The report lists
+every neutral fallback under "brand_assumptions" so they can be confirmed with the user.
 Only "practice" is required; everything else has a default (theme editorial, seed from the logo colour or #2E6B4F).
 
 Reads the ordered block IDs from plan.md (LP adds the landing header and footer), fills each block's slots from
@@ -34,6 +39,10 @@ B = json.loads(bpath.read_text(encoding="utf-8"))
 plan_path = pathlib.Path(a.plan).resolve() if a.plan else work / "content" / "plan.md"
 content_path = pathlib.Path(a.content).resolve() if a.content else work / "content" / "content.json"
 warnings, needs = [], []
+brand_path = pathlib.Path(B["brand"]) if B.get("brand") else work / "brand.json"
+if not brand_path.is_absolute(): brand_path = work / brand_path
+BR = json.loads(brand_path.read_text(encoding="utf-8")) if brand_path.exists() else None
+assumptions = []
 
 # ── Engine blocks ────────────────────────────────────────────────────────
 def load_block(bid):
@@ -152,7 +161,7 @@ def m3(seed, variant="fidelity"):
     tl = re.search(r"/\* primary tones: (.*?) \*/", r.stdout)
     tones = {int(k): v for k, v in re.findall(r"(\d+):(#[0-9A-Fa-f]{6})", tl.group(1))} if tl else {}
     return roles, tones
-seed = (B.get("seed") or B.get("logo_color") or "#2E6B4F").strip()
+seed = ((BR or {}).get("colors", {}).get("primary") or B.get("seed") or B.get("logo_color") or "#2E6B4F").strip()
 if not re.fullmatch(r"#?[0-9A-Fa-f]{6}", seed): warnings.append(f"seed {seed} is not a hex colour; used #2E6B4F"); seed = "#2E6B4F"
 seed = "#" + seed.lstrip("#").upper()
 got = m3(seed)
@@ -160,6 +169,23 @@ colour_source = "m3_scheme.py" if got else "OKLCH approximation (materialyoucolo
 roles, tones = got or oklch_scheme(seed)
 for t_ in TONE_L:
     tones.setdefault(t_, oklch_scheme(seed)[1][t_])
+def on_colour(hx):
+    lum = lambda c: 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+    L = lum(hex2rgb(hx)); return "#FFFFFF" if (1.05) / (L + 0.05) >= (L + 0.05) / 0.05 else "#000000"
+if BR:
+    cols = BR.get("colors") or {}
+    acc = [c for c in (cols.get("accent") or []) if re.fullmatch(r"#?[0-9A-Fa-f]{6}", str(c))]
+    sec = [c for c in (cols.get("secondary") or []) if re.fullmatch(r"#?[0-9A-Fa-f]{6}", str(c))]
+    if acc:
+        a0 = "#" + acc[0].lstrip("#").upper(); roles["--md-sys-color-tertiary"] = a0; roles["--md-sys-color-on-tertiary"] = on_colour(a0)
+    else:   # no accent in the guide: never invent one
+        for r in ("", "on-", "-container", "on-container"):
+            src = {"": "primary", "on-": "on-primary", "-container": "primary-container", "on-container": "on-primary-container"}[r]
+            dst = {"": "tertiary", "on-": "on-tertiary", "-container": "tertiary-container", "on-container": "on-tertiary-container"}[r]
+            roles[f"--md-sys-color-{dst}"] = roles[f"--md-sys-color-{src}"]
+        assumptions.append("The brand guide names no accent colour: used the brand colour where the theme has an accent (no new colour added)")
+    if sec:
+        s0 = "#" + sec[0].lstrip("#").upper(); roles["--md-sys-color-secondary"] = s0; roles["--md-sys-color-on-secondary"] = on_colour(s0)
 ink = " ".join(str(v) for v in hex2rgb(roles.get("--md-sys-color-on-surface", "#191C1A")))
 
 # ── Theme, fonts, shape, ornament ────────────────────────────────────────
@@ -174,6 +200,12 @@ elif isinstance(f, dict) and f.get("display"):
     d, b_ = f["display"], f.get("body") or f["display"]
     fonts = {"name": f"{d} + {b_}", "display": f"\"{d}\", Georgia, serif", "body": f"\"{b_}\", system-ui, sans-serif",
              "href": "https://fonts.googleapis.com/css2?" + "&".join(dict.fromkeys([gfont(d), gfont(b_)])) + "&display=swap"}
+bf = (BR or {}).get("fonts") or {}
+if BR and bf.get("display"):
+    d, b_ = bf["display"], bf.get("body") or bf["display"]
+    fonts = {"name": f"{d} + {b_} (brand)", "display": f"\"{d}\", Georgia, serif", "body": f"\"{b_}\", system-ui, sans-serif",
+             "href": bf.get("href") or "https://fonts.googleapis.com/css2?" + "&".join(dict.fromkeys([gfont(d), gfont(b_)])) + "&display=swap"}
+elif BR: assumptions.append(f"The brand guide names no fonts: used the {TH['name']} theme pairing ({fonts['name']})")
 CTA = {"leaf": "22px 4px 22px 4px", "pill": "999px", "soft": "14px", "square": "4px"}
 MEDIA = {"cut": ("4px 120px 4px 4px", "28px 4px 28px 28px"), "round": ("28px", "24px"), "soft": ("14px", "14px"), "square": ("4px", "4px")}
 shape = {}
@@ -192,6 +224,43 @@ ORN = {
         f'<circle cx="{400 + x * 28}" cy="{300 + y * 28}" r="2.2"/>' for x in range(14) for y in range(11) if (x + y) % 2 == 0 and x + 13 - y > 6) + "</svg>",
 }
 ornament = B.get("ornament", TH.get("ornament", "none"))
+brand_over = {}
+if BR:
+    ok = lambda v: str(v or "").lower().startswith("allow")
+    appr = BR.get("approved") or {}
+    corners = BR.get("corners") or {}
+    def radius(kind):
+        v = str(corners.get(kind) or "unspecified").lower(); px = corners.get("radius_px")
+        if v.startswith("square"): return "0px"
+        if v.startswith("pill"): return "999px"
+        if v.startswith("round"): return f"{px or 8}px"
+        assumptions.append(f"The brand guide does not set {kind} corners: used plain, even {px or 6}px corners")
+        return f"{px or 6}px"
+    rb, rm = radius("buttons"), radius("media")
+    if bf.get("display"): brand_over["--display-stretch"] = "100%"   # the brand font as designed, not widened
+    brand_over.update({"--radius-cta": rb, "--radius-media": rm, "--radius-card": rm, "--radius-field": "0px" if rb == "0px" else ("8px" if rb == "999px" else rb)})
+    shape = {}
+    if not ok(BR.get("decorative_elements")):
+        ornament = "none"; brand_over.update({"--hero-grain": "0", "--final-grain": "0"})
+        if str(BR.get("decorative_elements") or "unspecified").lower().startswith("unspec"):
+            assumptions.append("The brand guide does not mention decorative elements: left out the ornament and grain")
+    if not ok(BR.get("gradients")):
+        light_hero = theme == "clinical"
+        brand_over.update({"--hero-bg": "var(--md-sys-color-surface-container-low)" if light_hero else "var(--md-sys-color-primary)",
+                           "--final-bg": "var(--md-sys-color-primary)", "--m01a-overlay": "color-mix(in srgb, var(--tone-10) 78%, transparent)"})
+        if not light_hero:
+            brand_over.update({"--hero-accent": "var(--md-sys-color-on-primary)", "--hero-btn-bg": "var(--md-sys-color-surface)", "--hero-btn-fg": "var(--md-sys-color-primary)",
+                               "--hero-line": "color-mix(in srgb, var(--md-sys-color-on-primary) 30%, transparent)", "--hero-focus": "var(--md-sys-color-on-primary)"})
+        brand_over.update({"--final-btn-bg": "var(--md-sys-color-surface)", "--final-btn-fg": "var(--md-sys-color-primary)", "--final-focus": "var(--md-sys-color-on-primary)"})
+        if str(BR.get("gradients") or "unspecified").lower().startswith("unspec"):
+            assumptions.append("The brand guide does not mention gradients: used solid brand colour for the hero and final bands")
+    for k, v in appr.items():   # things the user explicitly approved beyond the guide
+        if k == "ornament": ornament = v
+        elif k == "cta_shape" and v in CTA: brand_over["--radius-cta"] = CTA[v]
+        elif k == "media_shape" and v in MEDIA: brand_over["--radius-media"], brand_over["--radius-card"] = MEDIA[v]
+        elif k.startswith("--"): brand_over[k] = v
+    if B.get("ornament") or B.get("cta_shape") or B.get("media_shape"):
+        warnings.append("Brand mode: build.json ornament and shape choices were ignored (add them to brand.json \"approved\" only if the user approved them)")
 orn_css = svg_uri(ORN[ornament]) if ornament in ORN else "none"
 
 # ── Globals for every block ──────────────────────────────────────────────
@@ -284,7 +353,7 @@ else:
 tok = dict(roles)
 tok.update({f"--tone-{k}": v for k, v in sorted(tones.items()) if k in TONE_L})
 tok.update({"--ink": ink, "--font-display": fonts["display"], "--font-body": fonts["body"], "--ornament": orn_css})
-tok.update(shape); tok.update(B.get("tokens") or {})
+over = dict(shape); over.update(brand_over); over.update(B.get("tokens") or {})
 token_block = ":root {\n  /* colours: " + colour_source + " from " + seed + " */\n" + "".join(f"  {k}: {v};\n" for k, v in tok.items()) + "}"
 block_css = "".join(f"\n/* block:{k} */\n{v}\n/* /block:{k} */\n" for k, v in used_css.items())
 if missing: block_css += "\n/* block:engine-missing */\n.engine-missing { padding: var(--space-5) 0; text-align: center; outline: 2px dashed var(--md-sys-color-outline); outline-offset: -12px; }\n/* /block:engine-missing */\n"
@@ -312,7 +381,7 @@ page = f"""<!doctype html>
 {token_block}
 {(ENG / 'base.css').read_text(encoding='utf-8').strip()}
 {(ENG / 'themes' / f'{theme}.css').read_text(encoding='utf-8').strip()}
-{block_css}{extra}</style>
+{(":root {" + chr(10) + "  /* per-practice choices and brand rules: after the theme so they win */" + chr(10) + "".join(f"  {k}: {v};" + chr(10) for k, v in over.items()) + "}" + chr(10)) if over else ""}{block_css}{extra}</style>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -336,10 +405,10 @@ for bid, key, s in keys_slots:
         alts.append(f'<style data-variant="{sib}">\n{ENGINE[sib]["css"]}\n</style>\n<template data-alt-for="{bid}" data-variant="{sib}" data-label="{html.escape(ENGINE[sib]["name"])}">\n{render_block(sib, key, sib_slots)}\n</template>')
 (work / "alternates.html").write_text("\n".join(alts) + "\n", encoding="utf-8")
 palettes = []
-for variant, label in (("tonal_spot", "Softer"), ("vibrant", "Brighter")):
+for variant, label in ([] if BR else  (("tonal_spot", "Softer"), ("vibrant", "Brighter"))):
     g = m3(seed, variant) if got else None
     if g: palettes.append({"name": f"{label} ({variant})", "tokens": g[0]})
-if not palettes:
+if not palettes and not BR:
     _, c0, h0 = to_oklch(hex2rgb(seed))
     for dh, label in ((-25, "Cooler"), (25, "Warmer")):
         alt_seed = oklch_hex(0.5, max(c0, 0.06), (h0 + dh) % 360)
@@ -349,10 +418,10 @@ for other in (ENG / "themes").glob("*.json"):
     o = json.loads(other.read_text())
     if o["name"] != TH["name"]: font_opts.append(o["fonts"])
 uniq = list({fo["name"]: fo for fo in font_opts}.values())
-(work / "tweak-options.json").write_text(json.dumps({"palettes": palettes, "fonts": uniq[1:], "brand_locked": B.get("brand_locked", {})}, indent=1), encoding="utf-8")
+(work / "tweak-options.json").write_text(json.dumps({"palettes": palettes, "fonts": uniq[1:], "brand_locked": ({"colors": True, "fonts": bool(bf.get("display"))} if BR else B.get("brand_locked", {}))}, indent=1), encoding="utf-8")
 
 if missing: needs.append(f"Build these blocks in the page's style (not in the engine yet): {', '.join(dict.fromkeys(missing))}")
 print(json.dumps({"files": [str(work / n) for n in ("index.html", "alternates.html", "tweak-options.json")],
                   "size_kb": round(len(page.encode()) / 1024, 1), "theme": theme, "fonts": fonts["name"], "colours": colour_source,
-                  "blocks": main_ids, "missing": missing, "alternates": len(alts), "needs_designer": needs, "warnings": warnings,
+                  "blocks": main_ids, "missing": missing, "brand_mode": bool(BR), "brand_assumptions": assumptions, "alternates": len(alts), "needs_designer": needs, "warnings": warnings,
                   "seconds": round(time.time() - T0, 2)}, indent=1))
