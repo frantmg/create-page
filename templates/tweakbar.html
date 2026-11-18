@@ -109,16 +109,8 @@ textarea { resize: vertical; min-height: 56px; }
 .lib-card .thumb-cap { flex-direction: column; align-items: flex-start; }
 .lib-card .use { color: var(--tw-muted); }
 .lib-card[hidden] { display: none; }
-.el-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.el-head b { font-size: 13px; }
-.el-tag { font-weight: 700; font-size: 12px; background: var(--tw-soft); border-radius: 5px; padding: 2px 6px; }
-#el-inspector .row label { flex: 0 0 96px; color: var(--tw-muted); font-size: 12px; }
-#el-inspector select { flex: 1; }
-.el-item { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px solid var(--tw-line); font-size: 12px; }
-.el-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shape-what { margin-top: -4px; margin-bottom: 10px; }
 .shape-what .hint { margin: 0; flex: 1; }
-.photo-prev { width: 100%; max-height: 140px; object-fit: cover; border-radius: 8px; margin: 6px 0; }
 .blk .body { padding: 2px 10px 10px; }
 .blk .body .row label { flex: 0 0 82px; color: var(--tw-muted); font-size: 12px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tw-accent); flex: none; }
@@ -143,7 +135,6 @@ textarea { resize: vertical; min-height: 56px; }
       <div class="seg" id="devices" aria-label="Preview width"></div>
       <span class="sep"></span>
       <button class="tog" id="t-select" aria-pressed="false" title="Click a block in the page to open its settings">Pick a block</button>
-      <button class="tog" id="t-element" aria-pressed="false" title="Click anything on the page to change it, replace a photo or pin a comment">Select element</button>
       <button class="tog" id="t-edit" aria-pressed="false" title="Click any text in the page to change it">Edit text</button>
       <button class="tog" id="t-orig" aria-pressed="false" title="Show the page as built, without your changes">Show original</button>
       <button class="tog" id="undo" title="Undo (Ctrl or Cmd + Z)" disabled>Undo</button>
@@ -168,7 +159,6 @@ textarea { resize: vertical; min-height: 56px; }
       <button role="tab" id="tab-btn-type" aria-controls="tab-type" aria-selected="false" tabindex="-1">Type</button>
       <button role="tab" id="tab-btn-layout" aria-controls="tab-layout" aria-selected="false" tabindex="-1">Shape</button>
       <button role="tab" id="tab-btn-blocks" aria-controls="tab-blocks" aria-selected="false" tabindex="-1">Blocks</button>
-      <button role="tab" id="tab-btn-element" aria-controls="tab-element" aria-selected="false" tabindex="-1">Element</button>
       <button role="tab" id="tab-btn-finish" aria-controls="tab-finish" aria-selected="false" tabindex="-1">Finish</button>
     </div>
 
@@ -216,13 +206,6 @@ textarea { resize: vertical; min-height: 56px; }
       <div id="blocks"></div>
       <h2>Header and footer</h2>
       <div id="gblocks"></div>
-    </section>
-
-    <section class="tab" id="tab-element" role="tabpanel" aria-labelledby="tab-btn-element">
-      <p class="hint" id="el-empty">Turn on “Select element” and click anything on the page: a heading, a button, a photo, a card. You can change it here within the brand's colours, sizes and spacing, replace a photo, or pin a comment to it.</p>
-      <div id="el-inspector" hidden></div>
-      <h2>Changed elements</h2>
-      <div id="el-list"><p class="hint">None yet.</p></div>
     </section>
 
     <section class="tab" id="tab-finish" role="tabpanel" aria-labelledby="tab-btn-finish">
@@ -354,11 +337,7 @@ html.tw-edit [data-tw-edited]{background-image:linear-gradient(rgb(194 24 91 / .
 .tw-planned p{margin:0 auto;max-width:60ch}
 .tw-planned .tw-pt{margin-bottom:6px;font-size:13px;font-weight:700;color:#C2185B}
 .tw-planned .tw-pn{margin-bottom:6px;font-size:22px;font-weight:700}
-.tw-planned .tw-pu{font-size:14px;color:#5B5B66}
-html.tw-pick-el [data-tw-key]{cursor:crosshair}
-[data-tw-hover]{outline:1px dashed #C2185B!important;outline-offset:1px}
-[data-tw-sel]{outline:3px solid #C2185B!important;outline-offset:2px}
-[data-tw-comment]{outline:2px dashed #E08A00!important;outline-offset:3px}`;
+.tw-planned .tw-pu{font-size:14px;color:#5B5B66}`;
 
 /* ── State (kept per page in this browser) ───────────────────────────── */
 const KEY = 'tw:' + DATA.page_hash;
@@ -370,7 +349,7 @@ const syncers = [];   // re-sync controls after undo / redo
 let hist = [JSON.stringify(state)], hi = 0, histTimer = null;
 const save = () => {
   try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch (e) { if (Object.values(state.el || {}).some(x => x.image)) toast('Photos are too big to keep in this browser: send your changes before closing the page.'); }
+  catch (e) {}
   refreshSummary(); clearTimeout(histTimer); histTimer = setTimeout(pushHistory, 350);
 };
 function pushHistory() { histTimer = null; const s = JSON.stringify(state); if (s === hist[hi]) return; hist = hist.slice(0, hi + 1); hist.push(s); if (hist.length > 60) hist.shift(); hi = hist.length - 1; syncUndo(); }
@@ -440,44 +419,6 @@ const tokenCss = () => ':root{' + Object.entries(effective()).map(([k, v]) => `$
 const pathOf = (root, node) => { const p = []; while (node && node !== root) { p.unshift([...node.parentElement.children].indexOf(node)); node = node.parentElement; } return p; };
 const byPath = (root, p) => p.reduce((n, i) => n && n.children[i], root);
 const variantOf = key => state.variants[key] || '';
-/* Elements: per-element changes within the page's own tokens, photos and pinned comments */
-const tokOpts = (keys, label) => keys.filter(k => k in ORIG).map(k => [`var(${k})`, label(k)]);
-const COLOUR_OPTS = [['', 'As built'], ...tokOpts(Object.keys(ORIG).filter(k => k.startsWith('--md-sys-color-')), k => k.replace('--md-sys-color-', '').replace(/-/g, ' '))];
-const PROPS = [
-  ['color', 'Text colour', COLOUR_OPTS],
-  ['background-color', 'Background', [['', 'As built'], ['transparent', 'None'], ...COLOUR_OPTS.slice(1)]],
-  ['font-size', 'Size', [['', 'As built'], ...tokOpts(['--text-h1', '--text-h2', '--text-h3', '--text-h4', '--text-lead', '--text-body', '--text-caption', '--text-eyebrow'], k => k.replace('--text-', ''))]],
-  ['font-weight', 'Weight', [['', 'As built'], ['400', 'Regular'], ['500', 'Medium'], ['600', 'Semibold'], ['700', 'Bold']]],
-  ['text-align', 'Alignment', [['', 'As built'], ['left', 'Left'], ['center', 'Center'], ['right', 'Right']]],
-  ['margin-top', 'Space above', [['', 'As built'], ['0', 'None'], ...tokOpts(['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6'], k => 'Step ' + k.slice(-1))]],
-  ['margin-bottom', 'Space below', [['', 'As built'], ['0', 'None'], ...tokOpts(['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6'], k => 'Step ' + k.slice(-1))]],
-  ['padding', 'Inner space', [['', 'As built'], ['0', 'None'], ...tokOpts(['--space-1', '--space-2', '--space-3', '--space-4', '--space-5'], k => 'Step ' + k.slice(-1))]],
-  ['max-width', 'Width', [['', 'As built'], ['none', 'Full width'], ...tokOpts(['--measure'], () => 'Reading width'), ['24ch', 'Narrow']]],
-  ['border-radius', 'Corners', [['', 'As built'], ['0', 'Square'], ...tokOpts(['--radius-s', '--radius-m', '--radius-l', '--radius-pill'], k => ({ '--radius-s': 'Small', '--radius-m': 'Medium', '--radius-l': 'Large', '--radius-pill': 'Pill' })[k])]],
-];
-const elClass = e => 'x-' + (e.key + (e.variant ? '-' + e.variant : '')).toLowerCase().replace(/[^a-z0-9]+/g, '') + '-' + (e.path.length ? e.path.join('-') : 'root');
-const activeEls = () => Object.values(state.el || {}).filter(e => e.variant === variantOf(e.key));
-function elCss() {
-  return activeEls().map(e => {
-    const c = elClass(e), d = Object.entries(e.styles || {}).filter(([, v]) => v !== '').map(([k, v]) => `${k}:${v}`);
-    if (e.hide) d.push('display:none');
-    return (d.length ? `.${c}.${c}.${c}{${d.join(';')}}` : '') + (e.image && !e.isImg ? `.${c}>img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}` : '');
-  }).join('\n');
-}
-function setImage(n, img, doc) {
-  if (n.tagName === 'IMG') { n.setAttribute('src', img.src); n.removeAttribute('srcset'); n.setAttribute('alt', img.alt || ''); return; }
-  n.textContent = ''; n.removeAttribute('role'); n.removeAttribute('aria-label');
-  const i = doc.createElement('img'); i.setAttribute('src', img.src); i.setAttribute('alt', img.alt || ''); n.appendChild(i);
-}
-function applyEls(doc, getBlock) {
-  activeEls().forEach(e => {
-    const b = getBlock(e.key); if (!b || (b.getAttribute('data-tw-variant') || '') !== e.variant) return;
-    const n = byPath(b, e.path); if (!n) return;
-    n.classList.add(elClass(e));
-    if (e.image) setImage(n, e.image, doc);
-    if (e.comment && e.comment.trim()) n.setAttribute('data-tw-comment', '');
-  });
-}
 
 function build(original) {
   const doc = parse();
@@ -511,8 +452,6 @@ function build(original) {
     const e = map.get(c.key); if (!e || (e.getAttribute('data-tw-variant') || '') !== c.variant) return;
     const n = byPath(e, c.path); if (n) { n.innerHTML = c.afterHtml; n.setAttribute('data-tw-edited', ''); }
   });
-  applyEls(doc, k => map.get(k));
-  add('style', { id: 'tw-el', textContent: elCss() });
   for (const [key, bid] of Object.entries(state.replace)) {   // replaced blocks: hide the old one, show where the new one goes
     const e = map.get(key); if (!e) continue;
     e.setAttribute('data-tw-hidden', ''); e.removeAttribute('data-tw-key');
@@ -539,7 +478,7 @@ function planned(doc, bid, key, tag) {
 
 const frame = $('#page');
 const fdoc = () => frame.contentDocument;
-let scrollY = 0, showOriginal = false, mode = { select: false, edit: false, element: false }, selEl = null;
+let scrollY = 0, showOriginal = false, mode = { select: false, edit: false };
 function render() {
   try { scrollY = frame.contentWindow.scrollY || 0; } catch (e) {}
   frame.srcdoc = build(showOriginal);
@@ -559,13 +498,8 @@ frame.addEventListener('load', () => {
   d.addEventListener('focusout', onFocusOut);
   d.addEventListener('keydown', e => { if (e.target.isContentEditable && (e.key === 'Enter' || e.key === 'Escape')) { e.preventDefault(); e.target.blur(); } });
   d.addEventListener('paste', e => { if (!e.target.isContentEditable) return; e.preventDefault(); d.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
-  d.addEventListener('mouseover', e => {
-    if (!mode.element) return;
-    d.querySelectorAll('[data-tw-hover]').forEach(x => x.removeAttribute('data-tw-hover'));
-    const b = e.target.closest('[data-tw-key]'); if (b && !b.hasAttribute('data-tw-planned')) pickTarget(e.target).setAttribute('data-tw-hover', '');
-  });
   d.addEventListener('keydown', onUndoKey);
-  markSelection(); setModes(); contrast();
+  setModes(); contrast();
 });
 
 /* ── Pick a block / edit text inside the preview ─────────────────────── */
@@ -584,17 +518,10 @@ function setModes() {
   const d = fdoc(); if (!d || showOriginal) return;
   d.documentElement.classList.toggle('tw-select', mode.select);
   d.documentElement.classList.toggle('tw-edit', mode.edit);
-  d.documentElement.classList.toggle('tw-pick-el', mode.element);
-  if (!mode.element) d.querySelectorAll('[data-tw-hover]').forEach(x => x.removeAttribute('data-tw-hover'));
   editable(d).forEach(e => mode.edit ? e.setAttribute('contenteditable', 'true') : e.removeAttribute('contenteditable'));
 }
-const pickTarget = t => (t.closest('svg') && t.closest('svg').parentElement) || t;
 function onFrameClick(e) {
   if (mode.edit) { if (e.target.closest('a,button,summary,label')) e.preventDefault(); return; }
-  if (mode.element) {
-    const b = e.target.closest('[data-tw-key]'); if (!b || b.hasAttribute('data-tw-planned')) return;
-    e.preventDefault(); e.stopPropagation(); selectElement(b, pickTarget(e.target)); return;
-  }
   if (!mode.select) return;
   const b = e.target.closest('[data-tw-key]'); if (!b) return;
   e.preventDefault(); e.stopPropagation(); openBlock(b.getAttribute('data-tw-key'));
@@ -625,11 +552,10 @@ DEVICES.forEach(([label, w], i) => $('#devices').append(el('button', { 'aria-pre
   frame.style.width = w; [...$('#devices').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget));
 } }, label)));
 const toggle = (btn, fn) => btn.addEventListener('click', () => { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', on); fn(on); });
-const onlyMode = name => { ['select', 'edit', 'element'].forEach(m => { if (m !== name) { mode[m] = false; $('#t-' + m).setAttribute('aria-pressed', false); } }); };
+const onlyMode = name => { ['select', 'edit'].forEach(m => { if (m !== name) { mode[m] = false; $('#t-' + m).setAttribute('aria-pressed', false); } }); };
 toggle($('#t-select'), on => { mode.select = on; if (on) onlyMode('select'); setModes(); banner(''); });
 toggle($('#t-edit'), on => { mode.edit = on; if (on) onlyMode('edit'); setModes(); banner(on ? 'Edit text: click any text in the page and type. Enter or Esc to finish. Edits go to the copywriter to keep the reading level.' : ''); });
-toggle($('#t-element'), on => { mode.element = on; if (on) { onlyMode('element'); selectTab($('#tab-btn-element')); } setModes(); banner(on ? 'Select element: click anything on the page to change it, replace a photo or pin a comment.' : ''); });
-toggle($('#t-orig'), on => { showOriginal = on; $('#panel').classList.toggle('locked', on); ['#t-select', '#t-edit', '#t-element', '#undo', '#redo'].forEach(s => $(s).disabled = on); if (!on) syncUndo(); banner(on ? 'Showing the page as built. Turn off “Show original” to see your changes.' : ''); render(); });
+toggle($('#t-orig'), on => { showOriginal = on; $('#panel').classList.toggle('locked', on); ['#t-select', '#t-edit', '#undo', '#redo'].forEach(s => $(s).disabled = on); if (!on) syncUndo(); banner(on ? 'Showing the page as built. Turn off “Show original” to see your changes.' : ''); render(); });
 function banner(t) { const b = $('#banner'); b.textContent = t; b.classList.toggle('on', !!t); }
 
 /* ── Colour tab ──────────────────────────────────────────────────────── */
@@ -893,95 +819,13 @@ async function setupShape() {
   const sh = fdoc() && fdoc().getElementById('tw-shape'); if (sh) sh.textContent = shapeCss();
 }
 
-/* ── Element tab: select, change within tokens, photo, comment ───────── */
-function markSelection() {
-  const d = fdoc(); if (!d || !selEl) return;
-  d.querySelectorAll('[data-tw-sel]').forEach(x => x.removeAttribute('data-tw-sel'));
-  const b = d.querySelector(`[data-tw-key="${CSS.escape(selEl.key)}"]`);
-  const n = b && (b.getAttribute('data-tw-variant') || '') === selEl.variant ? byPath(b, selEl.path) : null;
-  if (n) n.setAttribute('data-tw-sel', '');
-}
-function describe(n) {
-  const t = clean(n.innerText || n.getAttribute('alt') || n.getAttribute('aria-label') || '');
-  return t ? `“${t.slice(0, 50)}${t.length > 50 ? '…' : ''}”` : (n.tagName === 'IMG' || n.getAttribute('role') === 'img' ? 'photo' : n.tagName.toLowerCase());
-}
-function selectElement(b, n) {
-  const key = b.getAttribute('data-tw-key'), variant = b.getAttribute('data-tw-variant') || '', path = pathOf(b, n);
-  const isImg = n.tagName === 'IMG', isPhoto = isImg || n.getAttribute('role') === 'img' || /photo|image|media|img/i.test(typeof n.className === 'string' ? n.className : '') || (!n.children.length && /^\s*photo\b/i.test(n.textContent || ''));
-  selEl = { id: `${key}|${variant}|${path.join('.')}`, key, variant, path, tag: n.tagName.toLowerCase(), label: describe(n), isImg, isPhoto, depth: path.length };
-  markSelection(); selectTab($('#tab-btn-element')); renderInspector();
-}
-function selectParent() {
-  if (!selEl || !selEl.path.length) return;
-  const d = fdoc(), b = d.querySelector(`[data-tw-key="${CSS.escape(selEl.key)}"]`); const n = byPath(b, selEl.path.slice(0, -1)); if (n) selectElement(b, n);
-}
-const elEntry = () => state.el[selEl.id] || (state.el[selEl.id] = { id: selEl.id, key: selEl.key, variant: selEl.variant, path: selEl.path, tag: selEl.tag, label: selEl.label, isImg: selEl.isImg, styles: {}, image: null, comment: '', hide: false });
-function tidyEntry(id) { const e = state.el[id]; if (e && !Object.keys(e.styles).length && !e.image && !(e.comment || '').trim() && !e.hide) delete state.el[id]; }
-function changeEl(fn, rerender = true) { fn(elEntry()); tidyEntry(selEl.id); save(); renderElList(); if (rerender) render(); }
-async function fileToDataUrl(file, maxW = 1600) {
-  const url = URL.createObjectURL(file), img = new Image();
-  await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = url; });
-  const k = Math.min(1, maxW / img.naturalWidth), c = document.createElement('canvas');
-  c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-  let d = c.toDataURL('image/webp', 0.82); if (!d.startsWith('data:image/webp')) d = c.toDataURL('image/jpeg', 0.82);
-  return d;
-}
-function renderInspector() {
-  const box = $('#el-inspector');
-  if (!selEl) { box.hidden = true; $('#el-empty').hidden = false; return; }
-  box.hidden = false; $('#el-empty').hidden = true;
-  const e = state.el[selEl.id] || { styles: {}, image: null, comment: '', hide: false };
-  const kids = [
-    el('div', { class: 'el-head' }, el('span', {}, el('span', { class: 'el-tag', text: selEl.tag }), ' in ', el('b', { text: state.variants[selEl.key] || selEl.key.split('#')[0] })),
-      el('button', { class: 'mini', disabled: !selEl.path.length, onclick: selectParent, title: 'Select the element around this one' }, 'Select parent')),
-    el('p', { class: 'hint', text: selEl.label }),
-  ];
-  PROPS.forEach(([prop, label, opts]) => {
-    const id = 'el-' + prop;
-    kids.push(el('div', { class: 'row' }, el('label', { for: id, text: label }),
-      el('select', { id, onchange: ev => changeEl(x => { if (ev.target.value === '') delete x.styles[prop]; else x.styles[prop] = ev.target.value; }) },
-        opts.map(([v, l]) => el('option', { value: v, selected: (e.styles[prop] || '') === v, text: l })))));
-  });
-  kids.push(el('div', { class: 'row' }, el('label', { for: 'el-hide', text: 'Hide' }), el('input', { type: 'checkbox', id: 'el-hide', checked: !!e.hide, onchange: ev => changeEl(x => { x.hide = ev.target.checked; }) }), el('span', { class: 'lbl hint', text: 'Hide just this element' })));
-  if (selEl.isPhoto) {
-    kids.push(el('h2', { text: 'Photo' }));
-    if (e.image) kids.push(el('img', { class: 'photo-prev', src: e.image.src, alt: '' }));
-    kids.push(el('label', { class: 'hint', for: 'el-file', text: 'Replace with your own photo (it is resized and compressed for the page).' }),
-      el('input', { type: 'file', id: 'el-file', accept: 'image/*', onchange: async ev => { const f = ev.target.files[0]; if (!f) return; try { const src = await fileToDataUrl(f); changeEl(x => { x.image = { src, alt: (x.image && x.image.alt) || (selEl.label.startsWith('“') ? '' : '') }; }); renderInspector(); toast('Photo added'); } catch (err) { toast('That file could not be read as an image'); } } }),
-      el('label', { class: 'hint', for: 'el-alt', text: 'Describe the photo (alt text for screen readers)' }),
-      el('input', { type: 'text', id: 'el-alt', value: (e.image && e.image.alt) || '', placeholder: 'e.g. Doctor helping a patient stretch', onchange: ev => { if (!state.el[selEl.id] || !state.el[selEl.id].image) { toast('Choose a photo first'); return; } changeEl(x => { x.image.alt = ev.target.value; }); } }));
-    if (e.image) kids.push(el('div', { class: 'actions' }, el('button', { class: 'mini', onclick: () => { changeEl(x => { x.image = null; }); renderInspector(); } }, 'Remove photo')));
-  }
-  kids.push(el('h2', { text: 'Comment' }),
-    el('label', { class: 'hint', for: 'el-comment', text: 'A note pinned to this element, for the designer' }),
-    el('textarea', { id: 'el-comment', placeholder: 'e.g. Make this feel calmer', oninput: ev => changeEl(x => { x.comment = ev.target.value; }, false), onchange: () => render() }, e.comment || ''));
-  kids.push(el('div', { class: 'actions' },
-    el('button', { class: 'mini', onclick: () => { delete state.el[selEl.id]; save(); renderElList(); render(); renderInspector(); } }, 'Reset this element'),
-    el('button', { class: 'mini', onclick: () => { const n = fdoc().querySelector('[data-tw-sel]'); if (n) n.scrollIntoView({ behavior: 'instant', block: 'center' }); } }, 'Show in page')));
-  box.replaceChildren(...kids);
-}
-function elChanges(e) {
-  const names = Object.fromEntries(PROPS.map(([p, l]) => [p, l]));
-  const out = Object.entries(e.styles || {}).map(([k, v]) => `${names[k] || k}: ${(PROPS.find(x => x[0] === k)?.[2].find(o => o[0] === v) || [v, v])[1]}`);
-  if (e.hide) out.push('hidden'); if (e.image) out.push('new photo'); if ((e.comment || '').trim()) out.push('comment');
-  return out;
-}
-function renderElList() {
-  const items = activeEls();
-  $('#el-list').replaceChildren(...(items.length ? items.map(e => el('div', { class: 'el-item' },
-    el('span', { title: e.label, text: `${e.tag} ${e.label} · ${elChanges(e).join(', ')}` }),
-    el('button', { class: 'mini', onclick: () => { const d = fdoc(), b = d && d.querySelector(`[data-tw-key="${CSS.escape(e.key)}"]`); const n = b && byPath(b, e.path); if (n) { selectElement(b, n); n.scrollIntoView({ behavior: 'instant', block: 'center' }); } } }, 'Select'),
-    el('button', { class: 'mini', onclick: () => { delete state.el[e.id]; save(); renderElList(); render(); if (selEl && selEl.id === e.id) renderInspector(); } }, 'Remove'))) : [el('p', { class: 'hint', text: 'None yet.' })]));
-}
-
 /* ── Undo / redo ─────────────────────────────────────────────────────── */
 function undoRedo(step) {
   if (histTimer) { clearTimeout(histTimer); pushHistory(); }
   const j = hi + step; if (j < 0 || j >= hist.length) return;
   hi = j; state = Object.assign(fresh(), JSON.parse(hist[hi]));
   try { localStorage.setItem(KEY, hist[hi]); } catch (e) {}
-  renderPalettes(); renderFonts(); renderBlocks(); renderInspector(); renderElList(); refreshSummary();
+  renderPalettes(); renderFonts(); renderBlocks(); refreshSummary();
   $('#note').value = state.note || ''; syncers.forEach(f => f()); syncUndo();
   render(); setTimeout(renderPickers, 120); toast(step < 0 ? 'Undone' : 'Redone');
 }
@@ -1210,7 +1054,6 @@ function summaryLines() {
   Object.entries(state.notes).forEach(([k, v]) => L.push(`Note on ${label(k)}: “${clean(v).slice(0, 80)}”`));
   const edits = activeEdits();
   if (edits.length) L.push(`${edits.length} text edit${edits.length > 1 ? 's' : ''}`);
-  activeEls().forEach(e => L.push(`${e.key}: ${e.tag} ${e.label}: ${elChanges(e).join(', ')}`));
   if (clean(state.note)) L.push(`General note: “${clean(state.note).slice(0, 80)}”`);
   return L;
 }
@@ -1236,9 +1079,6 @@ function exportData() {
       backgrounds: Object.fromEntries(Object.entries(state.bg).map(([k, v]) => [k, BG[v]])), notes: state.notes,
     },
     copy_edits: activeEdits().map(c => ({ block: c.key, variant: c.variant || null, element: c.tag, path: c.path, before: c.beforeText, after: c.afterText })),
-    elements: activeEls().filter(e => Object.keys(e.styles || {}).length || e.hide).map(e => ({ block: e.key, variant: e.variant || null, element: e.tag, path: e.path, label: e.label, class: elClass(e), styles: Object.assign({}, e.styles, e.hide ? { display: 'none' } : {}) })),
-    images: activeEls().filter(e => e.image).map(e => ({ block: e.key, variant: e.variant || null, element: e.tag, path: e.path, label: e.label, class: elClass(e), src: e.image.src, alt: e.image.alt || '' })),
-    comments: activeEls().filter(e => (e.comment || '').trim()).map(e => ({ block: e.key, variant: e.variant || null, element: e.tag, path: e.path, label: e.label, text: e.comment.trim() })),
     contrast_failures: lastContrast.filter(x => !x.pass),
     brand_overrides: [...(locked.colors && colourChanged ? ['colors'] : []), ...(locked.fonts && state.fonts ? ['fonts'] : [])],
     note: clean(state.note) || null,
@@ -1264,8 +1104,6 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() =
 async function deliver(action) {
   const data = Object.assign(exportData(), { action });
   const body = JSON.stringify(data, null, 2);
-  const lite = () => { const d = JSON.parse(body); (d.images || []).forEach(i => { i.src = '[photo: attach it in the chat]'; }); return JSON.stringify(d, null, 2); };
-  const photos = (data.images || []).length;
   ['#send', '#approve'].forEach(s => $(s).disabled = true);
   status(action === 'approve' ? 'Telling Claude…' : 'Sending…');
   try {
@@ -1277,14 +1115,13 @@ async function deliver(action) {
   try {
     const db = typeof claude !== 'undefined' && claude.use ? await withTimeout(claude.use('db'), 4000) : null;
     if (db) {
-      const big = body.length > 700000;
-      await db.doc('tweaks/latest').set({ action, json: big ? lite() : body, sent_at: new Date().toISOString() });
-      status((action === 'approve' ? 'Saved. Type “done” in the chat and Claude delivers the page.' : 'Saved. Type “done” in the chat and Claude applies your changes.') + (big ? ` Your ${photos} photo${photos > 1 ? 's are' : ' is'} too large to save here: attach ${photos > 1 ? 'them' : 'it'} in the chat with your message.` : ''));
+      await db.doc('tweaks/latest').set({ action, json: body, sent_at: new Date().toISOString() });
+      status(action === 'approve' ? 'Saved. Type “done” in the chat and Claude delivers the page.' : 'Saved. Type “done” in the chat and Claude applies your changes.');
       ['#send', '#approve'].forEach(x => $(x).disabled = false);
       return;
     }
   } catch (e) {}
-  const txt = action === 'approve' ? 'Looks good, deliver the page.' : 'Apply these design tweaks:\n```json\n' + (photos ? lite() : body) + '\n```' + (photos ? `\n(Attach the ${photos} photo${photos > 1 ? 's' : ''} I chose in this message.)` : '');
+  const txt = action === 'approve' ? 'Looks good, deliver the page.' : 'Apply these design tweaks:\n```json\n' + body + '\n```';
   try { await navigator.clipboard.writeText(txt); status('Copied. Paste it in the chat with Claude.'); }
   catch (e) { selectTab($('#tab-btn-finish')); const t = $('#json'); t.closest('details').open = true; t.value = txt; t.select(); status('Select the text in the Finish tab and paste it in the chat.'); }
   finally { ['#send', '#approve'].forEach(s => $(s).disabled = false); }
@@ -1305,7 +1142,7 @@ $('#subtitle').textContent = `${DATA.page_title} · ${BLOCKS.length} blocks · $
 const locked = DATA.brand_locked || {};
 $('#lock-colours').hidden = !locked.colors; $('#lock-fonts').hidden = !locked.fonts;
 $('#seed').value = /^#[0-9a-f]{6}$/i.test(ORIG['--md-sys-color-primary'] || '') ? ORIG['--md-sys-color-primary'] : '#1463FF';
-renderPalettes(); renderFonts(); renderBlocks(); renderElList(); refreshSummary(); syncUndo();
+renderPalettes(); renderFonts(); renderBlocks(); refreshSummary(); syncUndo();
 setupShape().then(() => refreshSummary());
 frame.addEventListener('load', () => setTimeout(renderPickers, 30), { once: true });
 render();

@@ -12,10 +12,9 @@ blocks (removed with their CSS), block versions from alternates.html (markup and
 replaced block moves into alternates.html so the user can switch back), block backgrounds (band-* classes on the
 token pairs), and text edits: an edit's "final" text (set by page-content), or its "after" text with --copy-as-written
 (the user's words exactly as typed).
-Also element changes from "Select element" (only the page's own tokens; written as a class per element in a
-/* block:element-tweaks */ group), and photos (embedded as compressed data URIs, with the user's alt text).
-Leaves for page-designer (listed under needs_designer): replaced and added library blocks, notes, pinned comments,
-contrast failures, photos the user will attach in the chat, block versions without CSS, and text edits with no final text.
+(Change files from older tweak pages may also hold element changes, photos and comments; they are still applied.)
+Leaves for page-designer (listed under needs_designer): replaced and added library blocks, notes, contrast failures,
+block versions without CSS, and text edits with no final text.
 Block CSS is moved or removed only when it sits between /* block:ID */ and /* /block:ID */ markers (design-build 5.8).
 Refuses when tweaks.json was made on another version of the page (page_hash), unless --force.
 Writes index.html and alternates.html in place (copies go to <work>/backups/ first) and prints a JSON report.
