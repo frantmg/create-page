@@ -116,6 +116,8 @@ textarea { resize: vertical; min-height: 56px; }
 #el-inspector select { flex: 1; }
 .el-item { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px solid var(--tw-line); font-size: 12px; }
 .el-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shape-what { margin-top: -4px; margin-bottom: 10px; }
+.shape-what .hint { margin: 0; flex: 1; }
 .photo-prev { width: 100%; max-height: 140px; object-fit: cover; border-radius: 8px; margin: 6px 0; }
 .blk .body { padding: 2px 10px 10px; }
 .blk .body .row label { flex: 0 0 82px; color: var(--tw-muted); font-size: 12px; }
@@ -734,12 +736,13 @@ const pct = v => Math.round(v * 100) + '%';
 slider($('#type-sliders'), 'heading', 'Headings', 0.8, 1.3, 0.02, pct);
 slider($('#type-sliders'), 'body', 'Body text', 0.9, 1.15, 0.01, pct);
 
-/* ── Shape tab: real values measured from the page as built ───────────
-   The page is rendered once, unchanged, at 1440px and at 390px in hidden frames. Buttons, cards/photos/fields,
-   shadows, the content container and each section's padding are measured there, so the sliders show and set
-   real pixel values whatever the page's own token names are. Each element keeps its proportions (a lopsided shape
-   stays lopsided); rules use :not(#_) to outrank the page's own rules without !important. */
-const SHAPE = { ready: false, buttons: [], surfaces: [], shadows: [], container: null, sections: {}, base: {} };
+/* ── Shape tab: measured from the page as built ───────────────────────
+   The page is rendered once, unchanged, at 1440px and 390px in hidden frames and measured: buttons, rounded
+   cards/photos/fields (with their size), shadows (including ::before / ::after), the content container and each
+   section's padding. Corners are a percentage of fully rounded (0% square, 100% = half the element's shorter side,
+   a pill for buttons); shadows a percentage of as built; width and spacing in real pixels. Rules use :not(#_) to
+   outrank the page's own rules without !important. */
+const SHAPE = { ready: false, buttons: [], surfaces: [], shadows: [], container: null, sections: {}, base: {}, count: {} };
 const RADII = ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'];
 const BTN_SEL = '.btn, button, a[class*="btn"], a[class*="button"], input[type="submit"], input[type="button"]';
 function cssSel(e) {
@@ -753,31 +756,41 @@ function renderProbe(width) {
     const f = document.createElement('iframe'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
     Object.assign(f.style, { position: 'fixed', left: '-20000px', top: '0', width: width + 'px', height: '900px', border: '0', visibility: 'hidden' });
     document.body.appendChild(f);
-    f.addEventListener('load', () => setTimeout(() => res(f), 150), { once: true });
+    f.addEventListener('load', () => setTimeout(() => res(f), 200), { once: true });
     f.srcdoc = build(true);
   });
 }
-function median(a) { const b = a.filter(x => x != null).sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : null; }
+function median(a) { const b = a.filter(x => x != null && !isNaN(x)).sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : null; }
 function parseShadow(s) {
-  const first = s.split(/,(?![^(]*\))/)[0], col = (first.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/i) || ['rgb(0 0 0 / .12)'])[0];
+  const first = s.split(/,(?![^(]*\))/)[0], col = (first.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/i) || ['rgba(0, 0, 0, 0.12)'])[0];
   const n = (first.replace(col, '').match(/-?[\d.]+px/g) || []).map(parseFloat);
-  return { x: n[0] || 0, y: n[1] || 0, blur: n[2] || 0, spread: n[3] || 0, col };
+  const m = col.match(/[\d.]+/g) || [0, 0, 0, 0.12];
+  return { x: n[0] || 0, y: n[1] || 0, blur: n[2] || 0, spread: n[3] || 0, rgb: m.slice(0, 3).join(', '), a: m.length > 3 ? +m[3] : 1 };
 }
 async function measureShape() {
   const [big, small] = [await renderProbe(1440), await renderProbe(390)];
   try {
-    const d = big.contentDocument, w = big.contentWindow, cs = e => w.getComputedStyle(e), W = d.documentElement.clientWidth;
+    const d = big.contentDocument, w = big.contentWindow, cs = (e, p) => w.getComputedStyle(e, p || null), W = d.documentElement.clientWidth;
     const vis = e => { const r = e.getBoundingClientRect(), s = cs(e); return r.width >= 20 && r.height >= 14 && s.display !== 'none' && s.visibility !== 'hidden'; };
     const rad = e => RADII.map(k => parseFloat(cs(e)[k]) || 0);
     const all = [...d.body.querySelectorAll('*')].filter(e => !e.closest('.skip-link, script, style, svg') && vis(e));
-    const group = (els, fn) => { const m = new Map(); els.forEach(e => { const k = cssSel(e); if (!m.has(k)) m.set(k, fn(e)); }); return [...m].map(([sel, v]) => Object.assign({ sel }, v)); };
+    const group = (els, fn) => { const m = new Map(); els.forEach(e => { const k = cssSel(e); if (m.has(k)) m.get(k).n++; else m.set(k, Object.assign({ n: 1 }, fn(e))); }); return [...m].map(([sel, v]) => Object.assign({ sel }, v)); };
+    const side = e => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height); };
     const isBtn = e => e.matches(BTN_SEL);
-    SHAPE.buttons = group(all.filter(isBtn), e => ({ r: rad(e), h: e.getBoundingClientRect().height }));
+    SHAPE.buttons = group(all.filter(isBtn), e => ({ r: rad(e), half: side(e) / 2 }));
     SHAPE.surfaces = group(all.filter(e => {
       if (isBtn(e) || e.closest(BTN_SEL)) return false;
-      const r = rad(e), h = e.getBoundingClientRect().height; return Math.max(...r) > 0 && Math.max(...r) < h / 2 - 1;
-    }), e => ({ r: rad(e) }));
-    SHAPE.shadows = group(all.filter(e => { const x = cs(e).boxShadow; return x && x !== 'none' && !/inset/.test(x); }), e => ({ sh: parseShadow(cs(e).boxShadow) }));
+      const r = rad(e); return Math.max(...r) > 0 && Math.max(...r) < side(e) / 2 - 1;
+    }), e => ({ r: rad(e), half: side(e) / 2 }));
+    const real = sh => sh.blur > 0 && sh.a > 0;   // a 1px line (no blur) is a border, not a shadow
+    const shadowEls = [];
+    all.forEach(e => [null, '::before', '::after'].forEach(ps => {
+      const st = cs(e, ps), x = st.boxShadow; if (!x || x === 'none' || /inset/.test(x)) return;
+      if (ps && (st.content === 'none' || st.content === 'normal')) return;
+      const sh = parseShadow(x); if (real(sh)) shadowEls.push({ e, ps, sh });
+    }));
+    const sm = new Map(); shadowEls.forEach(({ e, ps, sh }) => { const k = cssSel(e) + (ps || ''); if (sm.has(k)) sm.get(k).n++; else sm.set(k, { sel: k, sh, n: 1, node: e }); });
+    SHAPE.shadows = [...sm.values()];
     const counts = new Map();
     all.forEach(e => {
       const s = cs(e), r = e.getBoundingClientRect(), ml = parseFloat(s.marginLeft), mr = parseFloat(s.marginRight);
@@ -787,35 +800,40 @@ async function measureShape() {
     });
     SHAPE.container = [...counts.values()].sort((x, y) => y.n - x.n)[0] || null;
     const pads = (doc, win) => Object.fromEntries([...doc.querySelectorAll('main > [data-block]')].map(e => [e.getAttribute('data-block'), [parseFloat(win.getComputedStyle(e).paddingTop) || 0, parseFloat(win.getComputedStyle(e).paddingBottom) || 0]]));
-    const pb = pads(d, w), ps = pads(small.contentDocument, small.contentWindow);
-    SHAPE.sections = Object.fromEntries(Object.keys(pb).map(k => [k, { big: pb[k], small: ps[k] || pb[k] }]));
+    const pb = pads(d, w), psm = pads(small.contentDocument, small.contentWindow);
+    SHAPE.sections = Object.fromEntries(Object.keys(pb).map(k => [k, { big: pb[k], small: psm[k] || pb[k] }]));
+    const pctOf = g => g.half > 0 ? Math.min(100, Math.round(100 * Math.max(...g.r) / g.half)) : 0;
     const primary = SHAPE.buttons.find(g => g.sel === '.btn') || SHAPE.buttons[0];
     SHAPE.base = {
-      btn: primary ? Math.round(Math.max(...primary.r)) : null, btnPill: primary ? Math.max(...primary.r) >= primary.h / 2 - 1 : false,
-      surf: median(SHAPE.surfaces.map(g => Math.max(...g.r))), shadow: SHAPE.shadows.length ? Math.round(median(SHAPE.shadows.map(g => g.sh.blur))) : null,
-      width: SHAPE.container ? SHAPE.container.w : null, space: median(Object.values(pb).map(v => v[0]).filter(v => v > 0)),
+      btnPct: primary ? pctOf(primary) : null,
+      surfPct: SHAPE.surfaces.length ? median(SHAPE.surfaces.map(pctOf)) : null,
+      shadowPct: SHAPE.shadows.length ? 100 : null,
+      width: SHAPE.container ? SHAPE.container.w : null,
+      space: median(Object.values(pb).map(v => v[0]).filter(v => v > 0)),
     };
+    const sum = arr => arr.reduce((t, g) => t + g.n, 0);
+    SHAPE.count = { btnPct: sum(SHAPE.buttons), surfPct: sum(SHAPE.surfaces), shadowPct: sum(SHAPE.shadows), width: SHAPE.container ? SHAPE.container.n : 0, space: Object.keys(pb).length };
     SHAPE.ready = true;
   } catch (e) { console.warn('shape measuring failed', e); }
   big.remove(); small.remove();
 }
 function shapeCss() {
   if (!SHAPE.ready) return '';
-  const st = state.shape || {}, B = SHAPE.base, out = [], px = v => Math.round(v) + 'px';
-  if (st.btn != null && SHAPE.buttons.length) {
-    const pill = st.btn >= 999, f = !pill && B.btn > 0 && !B.btnPill ? st.btn / B.btn : null;
-    SHAPE.buttons.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${pill ? '999px' : f ? g.r.map(x => px(x * f)).join(' ') : px(st.btn)}}`));
-  }
-  if (st.surf != null && SHAPE.surfaces.length) {
-    const f = B.surf > 0 ? st.surf / B.surf : null;
-    SHAPE.surfaces.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${f ? g.r.map(x => px(x * f)).join(' ') : px(st.surf)}}`));
-  }
-  if (st.shadow != null && SHAPE.shadows.length) {
-    SHAPE.shadows.forEach(g => out.push(`${g.sel}:not(#_){box-shadow:${st.shadow === 0 ? 'none' : `0 ${px(st.shadow * 0.35)} ${px(st.shadow)} ${px(-st.shadow * 0.25)} ${g.sh.col}`}}`));
+  const st = state.shape || {}, out = [], px = v => (Math.round(v * 10) / 10) + 'px';
+  const corners = (g, pct) => {   // scale every corner so the largest one is pct% of fully rounded (proportions kept)
+    const target = pct / 100 * g.half, cur = Math.max(...g.r);
+    if (pct >= 100 && g.half > 0) return g.r.map(x => cur > 0 ? px(Math.max(x / cur * 9999, 0)) : '9999px').join(' ').replace(/[\d.]+px/g, m => (parseFloat(m) > 0 ? '9999px' : '0px'));
+    return cur > 0 ? g.r.map(x => px(x / cur * target)).join(' ') : px(target);
+  };
+  if (st.btnPct != null) SHAPE.buttons.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${corners(g, st.btnPct)}}`));
+  if (st.surfPct != null) SHAPE.surfaces.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${corners(g, st.surfPct)}}`));
+  if (st.shadowPct != null) {
+    const f = st.shadowPct / 100;
+    SHAPE.shadows.forEach(g => { const s = g.sh; out.push(`${g.sel.replace(/(::?(before|after))$/, ':not(#_)$1')}${/::?(before|after)$/.test(g.sel) ? '' : ':not(#_)'}{box-shadow:${f === 0 ? 'none' : `${px(s.x * f)} ${px(s.y * f)} ${px(s.blur * f)} ${px(s.spread * f)} rgba(${s.rgb}, ${Math.min(0.6, +(s.a * Math.sqrt(f)).toFixed(3))})`}}`); });
   }
   if (st.width != null && SHAPE.container) out.push(`${SHAPE.container.sel}:not(#_){width:min(100% - 2 * var(--grid-gutter, 24px), ${px(st.width)});max-width:none}`);
-  if (st.space != null && B.space > 0) {
-    const f = st.space / B.space, big = [], small = [];
+  if (st.space != null && SHAPE.base.space > 0) {
+    const f = st.space / SHAPE.base.space, big = [], small = [];
     Object.entries(SHAPE.sections).forEach(([id, v]) => {
       if (v.big[0] + v.big[1] > 0) big.push(`[data-block="${id}"]:not(#_){padding-top:${px(v.big[0] * f)};padding-bottom:${px(v.big[1] * f)}}`);
       if (v.small[0] + v.small[1] > 0) small.push(`[data-block="${id}"]:not(#_){padding-top:${px(v.small[0] * f)};padding-bottom:${px(v.small[1] * f)}}`);
@@ -825,34 +843,53 @@ function shapeCss() {
   }
   return out.join('\n');
 }
-function pxSlider(key, label, min, max, step, note) {
-  const box = $('#layout-sliders'), base = SHAPE.base[key], id = 's-' + key;
-  if (base == null) { box.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: label }), el('span', { class: 'hint', text: note }))); return; }
+const SHAPE_UI = {
+  btnPct: { label: 'Button corners', min: 0, max: 100, step: 1, unit: '%', what: n => `${n} button${n === 1 ? '' : 's'}`, none: 'No buttons found on this page', sel: () => SHAPE.buttons.map(g => g.sel) },
+  surfPct: { label: 'Cards, photos, fields', min: 0, max: 100, step: 1, unit: '%', what: n => `${n} rounded element${n === 1 ? '' : 's'}`, none: 'No rounded cards, photos or fields on this page', sel: () => SHAPE.surfaces.map(g => g.sel) },
+  shadowPct: { label: 'Shadow strength', min: 0, max: 200, step: 5, unit: '%', what: n => `${n} shadow${n === 1 ? '' : 's'}`, none: 'This page has no shadows', sel: () => SHAPE.shadows.map(g => g.sel.replace(/::?(before|after)$/, '')) },
+  width: { label: 'Page width', min: 900, max: 1600, step: 10, unit: 'px', what: () => 'the content width (shown at 1440px)', none: 'No content container found', sel: () => SHAPE.container ? [SHAPE.container.sel] : [], wide: true },
+  space: { label: 'Section spacing', min: 16, max: 200, step: 4, unit: 'px', what: n => `${n} sections`, none: 'No section spacing found', sel: () => ['main > [data-block]'] },
+};
+function previewAt1440() {
+  const btn = [...$('#devices').children].find(b => b.textContent === '1440');
+  if (btn && btn.getAttribute('aria-pressed') !== 'true') { btn.click(); toast('Preview set to 1440px so the page width shows'); }
+}
+function showShape(key) {
+  const d = fdoc(); if (!d) return;
+  if (SHAPE_UI[key].wide) previewAt1440();
+  const els = SHAPE_UI[key].sel().flatMap(s => { try { return [...d.querySelectorAll(s)]; } catch (e) { return []; } });
+  d.querySelectorAll('[data-tw-focus]').forEach(x => x.removeAttribute('data-tw-focus'));
+  els.slice(0, 12).forEach(x => x.setAttribute('data-tw-focus', ''));
+  if (els[0]) els[0].scrollIntoView({ behavior: 'instant', block: 'center' });
+  setTimeout(() => d.querySelectorAll('[data-tw-focus]').forEach(x => x.removeAttribute('data-tw-focus')), 2500);
+}
+function shapeSlider(key) {
+  const u = SHAPE_UI[key], box = $('#layout-sliders'), base = SHAPE.base[key], id = 's-' + key;
+  if (base == null) { box.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: u.label }), el('span', { class: 'hint', text: u.none }))); return; }
   const val = () => state.shape[key] != null ? state.shape[key] : base;
-  const fmt = v => key === 'shadow' && v === 0 ? 'None' : (key === 'btn' && v >= 999 ? 'Pill' : v + 'px');
+  const fmt = v => (key === 'shadowPct' && v === 0 ? 'None' : v + u.unit);
   const out = el('output', { for: id, text: fmt(val()) });
-  const input = el('input', { type: 'range', id, min, max: Math.max(max, base), step, value: Math.min(val(), Math.max(max, base)), oninput: e => {
-    state.shape[key] = +e.target.value === base ? null : +e.target.value; if (state.shape[key] == null) delete state.shape[key];
-    out.textContent = fmt(+e.target.value); live(); } });
+  const input = el('input', { type: 'range', id, min: u.min, max: Math.max(u.max, base), step: u.step, value: val(), oninput: e => {
+    if (u.wide) previewAt1440();
+    const v = +e.target.value; if (v === base) delete state.shape[key]; else state.shape[key] = v;
+    out.textContent = fmt(v); live(); } });
   const reset = el('button', { class: 'mini', onclick: () => { delete state.shape[key]; input.value = base; out.textContent = fmt(base); live(); } }, 'Reset');
-  box.append(el('div', { class: 'row' }, el('label', { for: id, text: label }), input, out, reset));
-  syncers.push(() => { input.value = Math.min(val(), +input.max); out.textContent = fmt(val()); });
+  box.append(el('div', { class: 'row' }, el('label', { for: id, text: u.label }), input, out, reset),
+    el('div', { class: 'row shape-what' }, el('span', { class: 'hint', text: `As built: ${fmt(base)} · affects ${u.what(SHAPE.count[key])}` }),
+      el('button', { class: 'mini', onclick: () => showShape(key) }, 'Show')));
+  syncers.push(() => { input.value = val(); out.textContent = fmt(val()); });
 }
 async function setupShape() {
   await measureShape();
-  const B = SHAPE.base;
-  $('#shape-status').textContent = SHAPE.ready ? 'Measured from this page as built. Values are real pixels; every element keeps its proportions.' : 'This page could not be measured; use notes to ask for shape changes.';
+  $('#shape-status').textContent = SHAPE.ready ? 'Measured from this page as built. Corners are a percentage of fully rounded (100% is a pill); shadows a percentage of as built.' : 'This page could not be measured; use notes to ask for shape changes.';
   if (!SHAPE.ready) return;
-  pxSlider('btn', 'Button corners', 0, 40, 1, 'No buttons found on this page');
-  pxSlider('surf', 'Cards, photos, fields', 0, 64, 1, 'No rounded cards or photos on this page');
-  pxSlider('shadow', 'Shadow blur', 0, 96, 2, 'This page has no shadows');
-  pxSlider('width', 'Page width', 900, 1600, 10, 'No content container found');
-  pxSlider('space', 'Section spacing', 16, 200, 4, 'No section spacing found');
-  [['', 'As built'], ['999', 'Pill'], ['12', 'Rounded'], ['0', 'Square']].forEach(([v, l]) => $('#pill').append(el('button', { 'aria-pressed': v === '' ? state.shape.btn == null : String(state.shape.btn) === v, disabled: B.btn == null, onclick: e => {
-    if (v === '') delete state.shape.btn; else state.shape.btn = +v;
+  ['btnPct', 'surfPct', 'shadowPct', 'width', 'space'].forEach(shapeSlider);
+  const B = SHAPE.base;
+  [['', 'As built'], ['100', 'Pill'], ['30', 'Rounded'], ['0', 'Square']].forEach(([v, l]) => $('#pill').append(el('button', { 'aria-pressed': v === '' ? state.shape.btnPct == null : String(state.shape.btnPct) === v, disabled: B.btnPct == null, onclick: e => {
+    if (v === '') delete state.shape.btnPct; else state.shape.btnPct = +v;
     [...$('#pill').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget)); syncers.forEach(f => f()); live();
   } }, l)));
-  syncers.push(() => [...$('#pill').children].forEach((b, i) => b.setAttribute('aria-pressed', i === 0 ? state.shape.btn == null : String(state.shape.btn) === ['', '999', '12', '0'][i])));
+  syncers.push(() => [...$('#pill').children].forEach((b, i) => b.setAttribute('aria-pressed', i === 0 ? state.shape.btnPct == null : String(state.shape.btnPct) === ['', '100', '30', '0'][i])));
   const sh = fdoc() && fdoc().getElementById('tw-shape'); if (sh) sh.textContent = shapeCss();
 }
 
@@ -1162,8 +1199,8 @@ function summaryLines() {
   Object.entries(state.scale).forEach(([k, v]) => { if (v !== 1) L.push(`${names[k]}: ${v === 0 ? (k === 'radius' ? 'sharp' : 'none') : pct(v)}`); });
   if (state.gridMax) L.push(`Page width: ${state.gridMax}rem`);
   if (state.pill) L.push(`Buttons and pills: ${state.pill}`);
-  const SH = state.shape || {}, shName = { btn: 'Button corners', surf: 'Cards, photos and fields corners', shadow: 'Shadow blur', width: 'Page width', space: 'Section spacing' };
-  Object.entries(SH).forEach(([k, v]) => L.push(`${shName[k] || k}: ${k === 'shadow' && v === 0 ? 'none' : k === 'btn' && v >= 999 ? 'pill' : v + 'px'}${SHAPE.base[k] != null ? ` (was ${SHAPE.base[k]}px)` : ''}`));
+  const SH = state.shape || {};
+  Object.entries(SH).filter(([k]) => SHAPE_UI[k]).forEach(([k, v]) => { const u = SHAPE_UI[k]; L.push(`${u.label}: ${k === 'shadowPct' && v === 0 ? 'none' : v + u.unit}${SHAPE.base[k] != null ? ` (as built ${SHAPE.base[k]}${u.unit})` : ''}`); });
   if (state.order) L.push(`New block order: ${state.order.filter(k => !state.hidden.includes(k)).join(', ')}`);
   state.hidden.forEach(k => L.push(`Hide ${label(k)}`));
   Object.entries(state.replace).forEach(([k, id]) => L.push(`Replace ${label(k)} with ${id}${libName(id) ? ' (' + libName(id) + ')' : ''}`));
