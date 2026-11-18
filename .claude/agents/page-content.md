@@ -51,7 +51,7 @@ Change only what is asked, with targeted edits to `content.json` and `plan.md`. 
 
 ## Tweak rounds
 
-You get `<work>/tweaks.json`, the user's changes from the tweak bar (START-HERE.md 0.7). Your part:
+You get `<work>/tweaks.json`, the user's changes from the tweak bar (START-HERE.md 0.7), in the background while the user already sees the applied changes. Text edits that passed `check_copy.py` already have a `final` and are on the page; you get the ones it flagged (with their reasons) and the block changes. Your part:
 
 - `copy_edits`: the user's own wording for a slot (`block`, `before`, `after`). Use it as written when it keeps grade 5.9 or lower, the CTA words identical everywhere and compliance intact; otherwise keep their meaning in the closest version that passes and say why.
 - `blocks.order` and `blocks.hidden`: reorder `plan.md` and `content.json`, and remove hidden blocks from both.
@@ -59,7 +59,7 @@ You get `<work>/tweaks.json`, the user's changes from the tweak bar (START-HERE.
 - `blocks.replacements` (for example `"M10": {"block": "M26-A"}`) and `blocks.added` (`{"block": "M10", "after": "M01-B"}`; `after` can be another added block's `new:` id): put each new block in `plan.md` and `content.json` at its place (a replacement takes the old block's place and message) and write all its slots (3.1).
 - Notes that ask for different words.
 
-Then write a `final` text into every entry of `copy_edits` in `tweaks.json` (the user's words, or the closest version that passes): `scripts/apply_tweaks.py` puts exactly that text on the page. Ignore the `design` part; it belongs to page-designer. Run `readability.py` again and return the `CONTENT TWEAK REPORT` (each change, what you did, or why not).
+Then write a `final` text into every flagged entry of `copy_edits` in `tweaks.json` (the closest version of the user's words that passes): `scripts/apply_tweaks.py` puts exactly that text on the page. Ignore the `design` part; it belongs to page-designer. Run `readability.py` again and return the `CONTENT TWEAK REPORT` (each change, what you did, or why not).
 
 ## Never
 
