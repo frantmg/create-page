@@ -2,7 +2,7 @@
 
 You are reading the page builder kit. If the user asked for a page and you were sent here (by the `/create-page` loader skill, a pasted repo link, or Claude Code opened in this repo), you are the **orchestrator**: follow this file from section 0.
 
-**Kit version 6.2.4** (see `VERSION` and `CHANGELOG.md`)
+**Kit version 6.2.5** (see `VERSION` and `CHANGELOG.md`)
 
 Builds landing pages and website pages for healthcare practices (home, specialty, condition, location, provider, about, insurance, testimonials, contact). Pages are assembled from the Macallan block library below, art-directed with the `frontend-design` approach (a distinct visual identity per practice, no generic AI look), built as one plain HTML file on Material Design logic (no build tools or installs), and written at a 5th-grade reading level, because plain copy converts best.
 
@@ -149,7 +149,7 @@ Tell the user one line when each stage starts (writing content and designing, pa
 
 ### 0.7 The tweak round
 
-Right after the build (0.6 step 5), while the review runs, the user gets the page with a **tweak bar** to finish the design themselves: palettes, a new main colour, single colours with a live contrast check, font pairings or any Google font, sizes, spacing, corners, shadows, page width and button shape; and per block (each shown as a live preview): move, hide, swap to another version, replace it with any block from the library or add a library block below it (the tweak page marks the spot; the block is built when the changes come back), change the background, edit text and leave notes; and per element ("Select element": any heading, button, photo or card): change its text colour, background, size, weight, alignment, spacing, width or corners using only the page's own tokens, hide it, replace a photo with their own, or pin a comment to it. Undo and redo cover every change. One button sends everything back. Skip this round in unattended sessions.
+Right after the build (0.6 step 5), while the review runs, the user gets the page with a **tweak bar** to finish the design themselves: palettes, a new main colour, single colours with a live contrast check, font pairings or any Google font, sizes, and real pixel values measured from the page for button corners, card and photo corners, shadow blur, page width and section spacing, plus button shape presets; and per block (each shown as a live preview): move, hide, swap to another version, replace it with any block from the library or add a library block below it (the tweak page marks the spot; the block is built when the changes come back), change the background, edit text and leave notes; and per element ("Select element": any heading, button, photo or card): change its text colour, background, size, weight, alignment, spacing, width or corners using only the page's own tokens, hide it, replace a photo with their own, or pin a comment to it. Undo and redo cover every change. One button sends everything back. Skip this round in unattended sessions.
 
 1. **Make the tweak page:** `python3 <kit>/scripts/tweakbar.py <work>/index.html` writes `<work>/tweak.html` (it picks up `alternates.html` and `tweak-options.json` from the work folder; add `--seeds "#HEX"` for palettes made from extra brand colours). If it prints warnings about blocks or alternates, send them to page-designer to fix first. `index.html` is never changed by this.
 2. **Show it and wait for the button:**

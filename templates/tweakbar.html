@@ -203,9 +203,10 @@ textarea { resize: vertical; min-height: 56px; }
 
     <section class="tab" id="tab-layout" role="tabpanel" aria-labelledby="tab-btn-layout">
       <h2>Shape and space</h2>
+      <p class="hint" id="shape-status">Measuring the page…</p>
       <div id="layout-sliders"></div>
-      <h2>Buttons and pills</h2>
-      <div class="seg" id="pill" aria-label="Pill shape"></div>
+      <h2>Button shape</h2>
+      <div class="seg" id="pill" aria-label="Button shape"></div>
     </section>
 
     <section class="tab" id="tab-blocks" role="tabpanel" aria-labelledby="tab-btn-blocks">
@@ -361,7 +362,7 @@ html.tw-pick-el [data-tw-key]{cursor:crosshair}
 const KEY = 'tw:' + DATA.page_hash;
 const fresh = () => ({ palette: '', seedPalette: null, tokens: {}, fonts: null,
   scale: { heading: 1, body: 1, space: 1, radius: 1, shadow: 1 }, gridMax: null, pill: '',
-  order: null, hidden: [], variants: {}, bg: {}, notes: {}, copy: [], note: '', replace: {}, added: [], el: {} });
+  order: null, hidden: [], variants: {}, bg: {}, notes: {}, copy: [], note: '', replace: {}, added: [], el: {}, shape: {} });
 let state = (() => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(fresh(), s, { scale: Object.assign(fresh().scale, s.scale) }); } catch (e) {} return fresh(); })();
 const syncers = [];   // re-sync controls after undo / redo
 let hist = [JSON.stringify(state)], hi = 0, histTimer = null;
@@ -484,6 +485,7 @@ function build(original) {
   if (ALT_CSS) add('style', { textContent: ALT_CSS });
   add('style', { id: 'tw-base', textContent: TW_CSS });
   add('style', { id: 'tw-tokens', textContent: tokenCss() });
+  add('style', { id: 'tw-shape', textContent: shapeCss() });
   const map = keyed(doc);
   for (const [key, v] of Object.entries(state.variants)) {
     const e = map.get(key), alt = e && (ALTS[e.getAttribute('data-block')] || []).find(a => a.variant === v);
@@ -541,8 +543,8 @@ function render() {
   frame.srcdoc = build(showOriginal);
 }
 function live() { // token-only changes, no reload
-  const s = fdoc() && fdoc().getElementById('tw-tokens');
-  if (s) s.textContent = tokenCss(); else render();
+  const s = fdoc() && fdoc().getElementById('tw-tokens'), sh = fdoc() && fdoc().getElementById('tw-shape');
+  if (s) { s.textContent = tokenCss(); if (sh) sh.textContent = shapeCss(); } else render();
   setTimeout(contrast, 30); save();
 }
 frame.addEventListener('load', () => {
@@ -732,22 +734,127 @@ const pct = v => Math.round(v * 100) + '%';
 slider($('#type-sliders'), 'heading', 'Headings', 0.8, 1.3, 0.02, pct);
 slider($('#type-sliders'), 'body', 'Body text', 0.9, 1.15, 0.01, pct);
 
-/* ── Shape tab ───────────────────────────────────────────────────────── */
-slider($('#layout-sliders'), 'space', 'Spacing', 0.7, 1.4, 0.05, pct);
-slider($('#layout-sliders'), 'radius', 'Corners', 0, 2.5, 0.1, v => v === 0 ? 'Sharp' : pct(v));
-slider($('#layout-sliders'), 'shadow', 'Shadows', 0, 2.5, 0.1, v => v === 0 ? 'None' : pct(v));
-(() => {
-  const m = /^([\d.]+)rem$/.exec(ORIG['--grid-max'] || ''); if (!m) return;
-  const orig = +m[1], id = 's-width', out = el('output', { for: id, text: (state.gridMax || orig) + 'rem' });
-  const input = el('input', { type: 'range', id, min: 56, max: 100, step: 1, value: state.gridMax || orig, oninput: e => { state.gridMax = +e.target.value === orig ? null : +e.target.value; out.textContent = e.target.value + 'rem'; live(); } });
-  const reset = el('button', { class: 'mini', onclick: () => { state.gridMax = null; input.value = orig; out.textContent = orig + 'rem'; live(); } }, 'Reset');
-  $('#layout-sliders').append(el('div', { class: 'row' }, el('label', { for: id, text: 'Page width' }), input, out, reset));
-  syncers.push(() => { input.value = state.gridMax || orig; out.textContent = (state.gridMax || orig) + 'rem'; });
-})();
-[['', 'As built'], ['pill', 'Pill'], ['rounded', 'Rounded'], ['square', 'Square']].forEach(([v, l]) => $('#pill').append(el('button', { 'aria-pressed': state.pill === v, onclick: e => {
-  state.pill = v; [...$('#pill').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget)); live();
-} }, l)));
-syncers.push(() => [...$('#pill').children].forEach((b, i) => b.setAttribute('aria-pressed', ['', 'pill', 'rounded', 'square'][i] === state.pill)));
+/* ── Shape tab: real values measured from the page as built ───────────
+   The page is rendered once, unchanged, at 1440px and at 390px in hidden frames. Buttons, cards/photos/fields,
+   shadows, the content container and each section's padding are measured there, so the sliders show and set
+   real pixel values whatever the page's own token names are. Each element keeps its proportions (a lopsided shape
+   stays lopsided); rules use :not(#_) to outrank the page's own rules without !important. */
+const SHAPE = { ready: false, buttons: [], surfaces: [], shadows: [], container: null, sections: {}, base: {} };
+const RADII = ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'];
+const BTN_SEL = '.btn, button, a[class*="btn"], a[class*="button"], input[type="submit"], input[type="button"]';
+function cssSel(e) {
+  const c = [...e.classList].find(x => !/^(x-|tw-|is-|has-)/.test(x));
+  if (c) return '.' + CSS.escape(c);
+  const blk = e.closest('[data-block]'), tag = e.tagName.toLowerCase();
+  return blk ? `[data-block="${blk.getAttribute('data-block')}"] ${tag}` : tag;
+}
+function renderProbe(width) {
+  return new Promise(res => {
+    const f = document.createElement('iframe'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    Object.assign(f.style, { position: 'fixed', left: '-20000px', top: '0', width: width + 'px', height: '900px', border: '0', visibility: 'hidden' });
+    document.body.appendChild(f);
+    f.addEventListener('load', () => setTimeout(() => res(f), 150), { once: true });
+    f.srcdoc = build(true);
+  });
+}
+function median(a) { const b = a.filter(x => x != null).sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : null; }
+function parseShadow(s) {
+  const first = s.split(/,(?![^(]*\))/)[0], col = (first.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/i) || ['rgb(0 0 0 / .12)'])[0];
+  const n = (first.replace(col, '').match(/-?[\d.]+px/g) || []).map(parseFloat);
+  return { x: n[0] || 0, y: n[1] || 0, blur: n[2] || 0, spread: n[3] || 0, col };
+}
+async function measureShape() {
+  const [big, small] = [await renderProbe(1440), await renderProbe(390)];
+  try {
+    const d = big.contentDocument, w = big.contentWindow, cs = e => w.getComputedStyle(e), W = d.documentElement.clientWidth;
+    const vis = e => { const r = e.getBoundingClientRect(), s = cs(e); return r.width >= 20 && r.height >= 14 && s.display !== 'none' && s.visibility !== 'hidden'; };
+    const rad = e => RADII.map(k => parseFloat(cs(e)[k]) || 0);
+    const all = [...d.body.querySelectorAll('*')].filter(e => !e.closest('.skip-link, script, style, svg') && vis(e));
+    const group = (els, fn) => { const m = new Map(); els.forEach(e => { const k = cssSel(e); if (!m.has(k)) m.set(k, fn(e)); }); return [...m].map(([sel, v]) => Object.assign({ sel }, v)); };
+    const isBtn = e => e.matches(BTN_SEL);
+    SHAPE.buttons = group(all.filter(isBtn), e => ({ r: rad(e), h: e.getBoundingClientRect().height }));
+    SHAPE.surfaces = group(all.filter(e => {
+      if (isBtn(e) || e.closest(BTN_SEL)) return false;
+      const r = rad(e), h = e.getBoundingClientRect().height; return Math.max(...r) > 0 && Math.max(...r) < h / 2 - 1;
+    }), e => ({ r: rad(e) }));
+    SHAPE.shadows = group(all.filter(e => { const x = cs(e).boxShadow; return x && x !== 'none' && !/inset/.test(x); }), e => ({ sh: parseShadow(cs(e).boxShadow) }));
+    const counts = new Map();
+    all.forEach(e => {
+      const s = cs(e), r = e.getBoundingClientRect(), ml = parseFloat(s.marginLeft), mr = parseFloat(s.marginRight);
+      if (Math.abs(ml - mr) <= 1 && ml > 8 && r.width > 600 && r.width < W - 16 && e.parentElement && e.parentElement.getBoundingClientRect().width >= W - 1) {
+        const k = cssSel(e); const c = counts.get(k) || { sel: k, n: 0, w: Math.round(r.width) }; c.n++; counts.set(k, c);
+      }
+    });
+    SHAPE.container = [...counts.values()].sort((x, y) => y.n - x.n)[0] || null;
+    const pads = (doc, win) => Object.fromEntries([...doc.querySelectorAll('main > [data-block]')].map(e => [e.getAttribute('data-block'), [parseFloat(win.getComputedStyle(e).paddingTop) || 0, parseFloat(win.getComputedStyle(e).paddingBottom) || 0]]));
+    const pb = pads(d, w), ps = pads(small.contentDocument, small.contentWindow);
+    SHAPE.sections = Object.fromEntries(Object.keys(pb).map(k => [k, { big: pb[k], small: ps[k] || pb[k] }]));
+    const primary = SHAPE.buttons.find(g => g.sel === '.btn') || SHAPE.buttons[0];
+    SHAPE.base = {
+      btn: primary ? Math.round(Math.max(...primary.r)) : null, btnPill: primary ? Math.max(...primary.r) >= primary.h / 2 - 1 : false,
+      surf: median(SHAPE.surfaces.map(g => Math.max(...g.r))), shadow: SHAPE.shadows.length ? Math.round(median(SHAPE.shadows.map(g => g.sh.blur))) : null,
+      width: SHAPE.container ? SHAPE.container.w : null, space: median(Object.values(pb).map(v => v[0]).filter(v => v > 0)),
+    };
+    SHAPE.ready = true;
+  } catch (e) { console.warn('shape measuring failed', e); }
+  big.remove(); small.remove();
+}
+function shapeCss() {
+  if (!SHAPE.ready) return '';
+  const st = state.shape || {}, B = SHAPE.base, out = [], px = v => Math.round(v) + 'px';
+  if (st.btn != null && SHAPE.buttons.length) {
+    const pill = st.btn >= 999, f = !pill && B.btn > 0 && !B.btnPill ? st.btn / B.btn : null;
+    SHAPE.buttons.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${pill ? '999px' : f ? g.r.map(x => px(x * f)).join(' ') : px(st.btn)}}`));
+  }
+  if (st.surf != null && SHAPE.surfaces.length) {
+    const f = B.surf > 0 ? st.surf / B.surf : null;
+    SHAPE.surfaces.forEach(g => out.push(`${g.sel}:not(#_){border-radius:${f ? g.r.map(x => px(x * f)).join(' ') : px(st.surf)}}`));
+  }
+  if (st.shadow != null && SHAPE.shadows.length) {
+    SHAPE.shadows.forEach(g => out.push(`${g.sel}:not(#_){box-shadow:${st.shadow === 0 ? 'none' : `0 ${px(st.shadow * 0.35)} ${px(st.shadow)} ${px(-st.shadow * 0.25)} ${g.sh.col}`}}`));
+  }
+  if (st.width != null && SHAPE.container) out.push(`${SHAPE.container.sel}:not(#_){width:min(100% - 2 * var(--grid-gutter, 24px), ${px(st.width)});max-width:none}`);
+  if (st.space != null && B.space > 0) {
+    const f = st.space / B.space, big = [], small = [];
+    Object.entries(SHAPE.sections).forEach(([id, v]) => {
+      if (v.big[0] + v.big[1] > 0) big.push(`[data-block="${id}"]:not(#_){padding-top:${px(v.big[0] * f)};padding-bottom:${px(v.big[1] * f)}}`);
+      if (v.small[0] + v.small[1] > 0) small.push(`[data-block="${id}"]:not(#_){padding-top:${px(v.small[0] * f)};padding-bottom:${px(v.small[1] * f)}}`);
+    });
+    if (small.length) out.push(`@media (max-width: 899px){${small.join('')}}`);
+    if (big.length) out.push(`@media (min-width: 900px){${big.join('')}}`);
+  }
+  return out.join('\n');
+}
+function pxSlider(key, label, min, max, step, note) {
+  const box = $('#layout-sliders'), base = SHAPE.base[key], id = 's-' + key;
+  if (base == null) { box.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: label }), el('span', { class: 'hint', text: note }))); return; }
+  const val = () => state.shape[key] != null ? state.shape[key] : base;
+  const fmt = v => key === 'shadow' && v === 0 ? 'None' : (key === 'btn' && v >= 999 ? 'Pill' : v + 'px');
+  const out = el('output', { for: id, text: fmt(val()) });
+  const input = el('input', { type: 'range', id, min, max: Math.max(max, base), step, value: Math.min(val(), Math.max(max, base)), oninput: e => {
+    state.shape[key] = +e.target.value === base ? null : +e.target.value; if (state.shape[key] == null) delete state.shape[key];
+    out.textContent = fmt(+e.target.value); live(); } });
+  const reset = el('button', { class: 'mini', onclick: () => { delete state.shape[key]; input.value = base; out.textContent = fmt(base); live(); } }, 'Reset');
+  box.append(el('div', { class: 'row' }, el('label', { for: id, text: label }), input, out, reset));
+  syncers.push(() => { input.value = Math.min(val(), +input.max); out.textContent = fmt(val()); });
+}
+async function setupShape() {
+  await measureShape();
+  const B = SHAPE.base;
+  $('#shape-status').textContent = SHAPE.ready ? 'Measured from this page as built. Values are real pixels; every element keeps its proportions.' : 'This page could not be measured; use notes to ask for shape changes.';
+  if (!SHAPE.ready) return;
+  pxSlider('btn', 'Button corners', 0, 40, 1, 'No buttons found on this page');
+  pxSlider('surf', 'Cards, photos, fields', 0, 64, 1, 'No rounded cards or photos on this page');
+  pxSlider('shadow', 'Shadow blur', 0, 96, 2, 'This page has no shadows');
+  pxSlider('width', 'Page width', 900, 1600, 10, 'No content container found');
+  pxSlider('space', 'Section spacing', 16, 200, 4, 'No section spacing found');
+  [['', 'As built'], ['999', 'Pill'], ['12', 'Rounded'], ['0', 'Square']].forEach(([v, l]) => $('#pill').append(el('button', { 'aria-pressed': v === '' ? state.shape.btn == null : String(state.shape.btn) === v, disabled: B.btn == null, onclick: e => {
+    if (v === '') delete state.shape.btn; else state.shape.btn = +v;
+    [...$('#pill').children].forEach(b => b.setAttribute('aria-pressed', b === e.currentTarget)); syncers.forEach(f => f()); live();
+  } }, l)));
+  syncers.push(() => [...$('#pill').children].forEach((b, i) => b.setAttribute('aria-pressed', i === 0 ? state.shape.btn == null : String(state.shape.btn) === ['', '999', '12', '0'][i])));
+  const sh = fdoc() && fdoc().getElementById('tw-shape'); if (sh) sh.textContent = shapeCss();
+}
 
 /* ── Element tab: select, change within tokens, photo, comment ───────── */
 function markSelection() {
@@ -1055,6 +1162,8 @@ function summaryLines() {
   Object.entries(state.scale).forEach(([k, v]) => { if (v !== 1) L.push(`${names[k]}: ${v === 0 ? (k === 'radius' ? 'sharp' : 'none') : pct(v)}`); });
   if (state.gridMax) L.push(`Page width: ${state.gridMax}rem`);
   if (state.pill) L.push(`Buttons and pills: ${state.pill}`);
+  const SH = state.shape || {}, shName = { btn: 'Button corners', surf: 'Cards, photos and fields corners', shadow: 'Shadow blur', width: 'Page width', space: 'Section spacing' };
+  Object.entries(SH).forEach(([k, v]) => L.push(`${shName[k] || k}: ${k === 'shadow' && v === 0 ? 'none' : k === 'btn' && v >= 999 ? 'pill' : v + 'px'}${SHAPE.base[k] != null ? ` (was ${SHAPE.base[k]}px)` : ''}`));
   if (state.order) L.push(`New block order: ${state.order.filter(k => !state.hidden.includes(k)).join(', ')}`);
   state.hidden.forEach(k => L.push(`Hide ${label(k)}`));
   Object.entries(state.replace).forEach(([k, id]) => L.push(`Replace ${label(k)} with ${id}${libName(id) ? ' (' + libName(id) + ')' : ''}`));
@@ -1080,6 +1189,8 @@ function exportData() {
       palette: state.palette || null, palette_seed: p && p.seed ? p.seed : null,
       fonts: state.fonts ? { name: state.fonts.name, display: state.fonts.display, body: state.fonts.body, href: state.fonts.href } : null,
       tokens, scale: state.scale, grid_max_rem: state.gridMax, pill: state.pill || null,
+      shape: Object.keys(state.shape || {}).length ? Object.assign({ was: SHAPE.base }, state.shape) : null,
+      shape_css: shapeCss() || null,
     },
     blocks: {
       original_order: ORIG_ORDER, order: state.order, hidden: state.hidden, variants: state.variants,
@@ -1158,6 +1269,7 @@ const locked = DATA.brand_locked || {};
 $('#lock-colours').hidden = !locked.colors; $('#lock-fonts').hidden = !locked.fonts;
 $('#seed').value = /^#[0-9a-f]{6}$/i.test(ORIG['--md-sys-color-primary'] || '') ? ORIG['--md-sys-color-primary'] : '#1463FF';
 renderPalettes(); renderFonts(); renderBlocks(); renderElList(); refreshSummary(); syncUndo();
+setupShape().then(() => refreshSummary());
 frame.addEventListener('load', () => setTimeout(renderPickers, 30), { once: true });
 render();
 })();

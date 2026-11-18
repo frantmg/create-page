@@ -3,7 +3,9 @@
 Usage: python3 apply_tweaks.py <work>/tweaks.json [--page <work>/index.html] [--alternates <work>/alternates.html]
                                [--copy-as-written] [--force] [--dry-run]
 
-Applies: colour and other tokens (real values written into the :root token block; a palette made from a seed is
+Applies: shape changes from the Shape tab (real pixel values for button, card and photo corners, shadows, page width
+and section spacing, measured from the page and written as a /* block:shape-tweaks */ group), colour and other tokens
+(real values written into the :root token block; a palette made from a seed is
 recomputed with m3_scheme.py when it is installed), size, spacing, corner and shadow scales (the token literals are
 multiplied, no calc() left behind), page width and button shape, fonts (the Google Fonts link), block order, hidden
 blocks (removed with their CSS), block versions from alternates.html (markup and its <style data-variant> CSS; the
@@ -83,6 +85,18 @@ JS = r"""
     }
     for (let i = roots.length - 1; i >= 0; i--) { const r = roots[i]; css = css.slice(0, r.start) + ':root {' + r.body + '}' + css.slice(r.start + r.text.length); }
   } else if (Object.keys(tokens).length) R.needs_designer.push('No :root token block found; apply design.tokens by hand');
+
+  // 1b. Shape: real-value rules measured by the tweak bar (corners, shadows, page width, section spacing), as previewed
+  if (design.shape_css) {
+    const decls = [...design.shape_css.matchAll(/\{([^{}]*)\}/g)].flatMap(m => m[1].split(';').map(d => d.split(':')[0].trim()).filter(Boolean));
+    const allowed = /^(border-radius|box-shadow|width|max-width|padding-top|padding-bottom)$/;
+    if (/[<>]/.test(design.shape_css) || !decls.length || !decls.every(d => allowed.test(d))) R.needs_designer.push('Shape changes could not be applied safely; apply them by hand: ' + JSON.stringify(design.shape || {}));
+    else {
+      cutBlockCss('shape-tweaks');
+      css += `\n/* block:shape-tweaks */\n${design.shape_css.trim()}\n/* /block:shape-tweaks */\n`;
+      R.applied.push('shape: ' + Object.entries(design.shape || {}).filter(([k]) => k !== 'was').map(([k, v]) => `${k} ${v}`).join(', '));
+    }
+  }
 
   // 2. Fonts
   if (design.fonts && design.fonts.href) {
