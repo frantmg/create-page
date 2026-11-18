@@ -8,7 +8,7 @@ Builds landing pages and website pages for healthcare practices (home, specialty
 
 This kit runs as a relay: the **orchestrator** (you, in the user's conversation) runs the intake and the relay, the **page-content** agent writes the plan and every word, the **page-designer** agent designs and builds (starting on the design system while the words are written), and three **page-qa** agents review independently, in parallel. Section 0 says who does what. Do not skip the intake gate. Agents never read this file: each reads `agents/shared.md` and its own role file.
 
-0. How this runs (roles, brief, content modes, timing, the relay, fix routing, the tweak round)
+0. How this runs (roles, brief, content modes, timing, the relay, fix routing, the tweak round, Claude Design)
 1. Intake (gate)
 2. Read the materials
 3. Plan the page: pick the blocks
@@ -42,6 +42,7 @@ Section numbers used anywhere in this kit point to these files:
 | 8.10 | `scripts/timing.py` (records each stage's start and end in `<work>/timing.md`, 0.5) |
 | 8.11 | `scripts/setup.py` (installs what the scripts need, in the background during the intake) |
 | 8.12 | `scripts/fetch_site.py` (reads the current website once during the intake into `<work>/materials/site/`) |
+| 8.15 | `scripts/to_design.py` + `scripts/from_design.py` (move the page to a Claude Design canvas and bring the edited design back, 0.8) |
 | 8.14 | `scripts/check_copy.py` (checks the user's own text edits from the tweak bar so passing ones go in as written, 0.7) |
 | 8.13 | `scripts/build_packs.py` (builds `agents/packs/<role>.md`: each role's rule files in one file, word for word; run before every release) |
 | axe-core | `scripts/vendor/axe.min.js` (bundled, with its `LICENSE`) |
@@ -154,8 +155,8 @@ Right after the build (0.6 step 5), while the review runs, the user gets the pag
 
 1. **Make the tweak page:** `python3 <kit>/scripts/tweakbar.py <work>/index.html` writes `<work>/tweak.html` (it picks up `alternates.html` and `tweak-options.json` from the work folder; add `--seeds "#HEX"` for palettes made from extra brand colours). If it prints warnings about blocks or alternates, send them to page-designer to fix first. `index.html` is never changed by this.
 2. **Show it and wait for the button:**
-   - **Claude Code:** start `python3 <kit>/scripts/tweakserve.py <work> --once --open` as a **background** command. It opens the tweak page in the browser and exits as soon as the user presses **Send to Claude** or **Looks good, deliver**; its exit wakes you up. Give the user the address from `<work>/tweak-url.txt` in one line and end your turn: no question, nothing to paste. Its output is `RECEIVED apply <work>/tweaks.json` or `RECEIVED approve` (or `TIMEOUT` after an hour: say the tweak page is still open and how to restart it).
-   - **Other clients:** publish `tweak.html` as its **own** private artifact titled "<Practice> <page type> tweaks" (icon "settings"), declaring the `db` capability (`capabilities: {db: {}}`), never in place of the page's artifact; later rounds republish to the same tweak artifact. Tell the user: press **Send to Claude** (or **Looks good, deliver**) on the page, then type "done" here. On "done", read the artifact's data (`ArtifactData` get, collection `tweaks`, document `latest`): `action` is `apply` or `approve`, `json` is the change file. If there is no data or the tool is missing, the page has copied the changes instead: ask the user to paste them.
+   - **Claude Code:** start `python3 <kit>/scripts/tweakserve.py <work> --once --open` as a **background** command. It opens the tweak page in the browser and exits as soon as the user presses **Send to Claude** or **Looks good, deliver**; its exit wakes you up. Give the user the address from `<work>/tweak-url.txt` in one line and end your turn: no question, nothing to paste. Its output is `RECEIVED apply <work>/tweaks.json`, `RECEIVED approve` or `RECEIVED design` (the user pressed **Edit in Claude Design**: 0.8) (or `TIMEOUT` after an hour: say the tweak page is still open and how to restart it).
+   - **Other clients:** publish `tweak.html` as its **own** private artifact titled "<Practice> <page type> tweaks" (icon "settings"), declaring the `db` capability (`capabilities: {db: {}}`), never in place of the page's artifact; later rounds republish to the same tweak artifact. Tell the user: press **Send to Claude** (or **Looks good, deliver**) on the page, then type "done" here. On "done", read the artifact's data (`ArtifactData` get, collection `tweaks`, document `latest`): `action` is `apply`, `approve` or `design` (0.8), `json` is the change file. If there is no data or the tool is missing, the page has copied the changes instead: ask the user to paste them.
    - Their unsent changes are kept in that browser, so they can close the page and come back.
 3. **Approve:** `approve` (or the user says it looks good) means the final check, then delivery: if the page changed since the last independent review, start the three QA reviewers once (fresh, warmed up while you finish), route their findings as in 0.6 step 7, then deliver (section 7).
 4. **A tweak round is fast: the user's changes go in within a minute, nothing waits for an agent.** Say one short line when you start ("Applying your changes…") and one when done; no long summaries.
@@ -171,6 +172,22 @@ Right after the build (0.6 step 5), while the review runs, the user gets the pag
       - When they are done, run apply_tweaks again for the new `final` texts (the same change file), the quick check again, rebuild the tweak page and tell the user in one line that it is updated.
 5. **The independent review comes once, at the end** (step 3), covering everything that changed in the rounds, not once per round. The full 5-width qa.py run (with `--out <work>/qa/auto.json`) is part of that final check.
 6. **Next round:** there is no round limit; the user decides when it is done. Then deliver (section 7) and mention what the rounds changed.
+
+### 0.8 Claude Design: going there and coming back
+
+The tweak page's **Edit in Claude Design** button (or the user asking for it) moves the page to a Claude Design canvas, where they can change anything. The kit's checks do not run there, so the page comes back to the kit before delivery.
+
+**Going there:**
+1. If the user also sent changes, apply them first (0.7 step 4). Run the final automated check (`qa.py` full, with `--brand` when there is a brand.json) so the page that leaves is a passing one, and keep a copy: `cp <work>/index.html <work>/backups/index-before-design.html`.
+2. `python3 <kit>/scripts/to_design.py <work>/index.html --out <work>/design --title "<Practice> <page type>"` writes the canvas files (`project/canvas.json`, `project/Main.dc.html`) and the images to upload (`assets.json`).
+3. Create the canvas: publish with the Design type's `type_url` (find it with the artifact tool's quickstart, intent `design`) and the title, nothing else; follow the type's instructions in the reply. Upload each file in `assets.json` to the new canvas as an asset, write `{"<token>": "/_blob/<id>", ...}` to `<work>/design/urls.json`, run `to_design.py ... --fill <work>/design/urls.json`, then publish `project/canvas.json` and `project/Main.dc.html` to the canvas (root `<work>/design`).
+4. Give the user the link in one line: they can change anything there, and when they are done they say "bring the design back" (or press nothing: the kit's version stays as it was). Note the canvas link in `<work>/agents.md`.
+
+**Coming back** ("bring the design back"):
+1. Read the canvas: `project/Main.dc.html` (and `project/canvas.json` if there are more artboards: the page is `Main.dc.html`), and download every `/_blob/<id>` asset it uses into `<work>/design/download/` (each saved as `<id>.<ext>`).
+2. `python3 <kit>/scripts/from_design.py <the downloaded Main.dc.html> --base <work>/backups/index-before-design.html --out <work>/index.html --assets <work>/design/download`. It puts the styles, markup and images back into the single-file page and adds back the head and the scripts.
+3. Check what it reports: blocks that are no longer direct children of `<main>`, values it could not fill and Claude Design-only parts (`<sc-for>`, `<sc-if>`, `<dc-import>`, mounted components) go to the same designer, who rebuilds them as plain markup with targeted edits.
+4. Run the full checks (`qa.py`, `--brand` when there is a brand.json, `readability.py`), send real problems to the designer, and when the words changed in Claude Design, run them past page-content (or `check_copy.py` for small edits). Then show the tweak page again (0.7); the final independent review (0.7 step 3) covers what changed in Claude Design.
 
 ---
 

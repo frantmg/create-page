@@ -6,7 +6,7 @@ Serves <work>/tweak.html at http://127.0.0.1:<port>/ (the next free port from --
 and "Looks good, deliver" buttons POST to /__tweaks: the changes are saved to <work>/tweaks.json (an earlier
 tweaks.json is kept as tweaks-1.json, tweaks-2.json ...; photos the user added are saved in <work>/materials/uploads/ and
 the change file keeps their paths), and the script prints one line:
-  RECEIVED apply <path to tweaks.json>      or      RECEIVED approve
+  RECEIVED apply <path to tweaks.json>   or   RECEIVED approve   or   RECEIVED design (move it to Claude Design)
 --once exits right after that line, so an orchestrator running it in the background is woken up by the exit.
 --open opens the page in the default browser. --timeout ends with "TIMEOUT" when nothing arrives in time.
 The page is re-read on every request, so a rebuilt tweak.html shows on refresh. Only 127.0.0.1 is served."""
@@ -35,8 +35,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return self._send(400, b"bad json")
         action = data.get("action", "apply")
-        if action == "approve":
-            print("RECEIVED approve", flush=True)
+        if action in ("approve", "design"):
+            print(f"RECEIVED {action}", flush=True)
         else:
             up = work / "materials" / "uploads"   # photos from the tweak bar: saved as files, the change file keeps their paths
             for n, img in enumerate(data.get("images") or [], 1):

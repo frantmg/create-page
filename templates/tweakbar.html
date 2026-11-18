@@ -48,6 +48,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .send-row { display: flex; gap: 8px; margin: 0 0 4px; }
 .send-row .btn { flex: 1; }
 #send-status { margin: 2px 0 8px; min-height: 0; }
+.design-link { width: 100%; margin: 2px 0 6px; }
 #send-status:empty { display: none; }
 .tabs { display: flex; border-bottom: 1px solid var(--tw-line); padding: 0 6px; }
 .tabs button { flex: 1; font-size: 13px; border: 0; background: none; padding: 9px 4px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--tw-muted); }
@@ -152,6 +153,7 @@ textarea { resize: vertical; min-height: 56px; }
         <button class="btn" id="send">Send to Claude</button>
         <button class="btn ghost" id="approve">Looks good, deliver</button>
       </div>
+      <button class="mini design-link" id="to-design" title="Continue on a Claude Design canvas, where you can change anything. Ask Claude to bring it back here when you are done.">Edit in Claude Design</button>
       <p class="hint" id="send-status" role="status" aria-live="polite"></p>
     </div>
     <div class="tabs" role="tablist" aria-label="Tweak areas">
@@ -1105,29 +1107,30 @@ async function deliver(action) {
   const data = Object.assign(exportData(), { action });
   const body = JSON.stringify(data, null, 2);
   ['#send', '#approve'].forEach(s => $(s).disabled = true);
-  status(action === 'approve' ? 'Telling Claude…' : 'Sending…');
+  status(action === 'apply' ? 'Sending…' : 'Telling Claude…');
   try {
     if (/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) {
       const r = await fetch('/__tweaks', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-      if (r.ok) { status(action === 'approve' ? 'Done. Claude is delivering the page; you can close this tab.' : 'Sent. Claude is applying your changes; you can close this tab.'); return; }
+      if (r.ok) { status({ approve: 'Done. Claude is delivering the page; you can close this tab.', design: 'Sent. Claude is moving the page to Claude Design and will send you the link; send your other changes first if you have any.', apply: 'Sent. Claude is applying your changes; you can close this tab.' }[action]); return; }
     }
   } catch (e) {}
   try {
     const db = typeof claude !== 'undefined' && claude.use ? await withTimeout(claude.use('db'), 4000) : null;
     if (db) {
       await db.doc('tweaks/latest').set({ action, json: body, sent_at: new Date().toISOString() });
-      status(action === 'approve' ? 'Saved. Type “done” in the chat and Claude delivers the page.' : 'Saved. Type “done” in the chat and Claude applies your changes.');
+      status({ approve: 'Saved. Type “done” in the chat and Claude delivers the page.', design: 'Saved. Type “done” in the chat and Claude moves the page to Claude Design.', apply: 'Saved. Type “done” in the chat and Claude applies your changes.' }[action]);
       ['#send', '#approve'].forEach(x => $(x).disabled = false);
       return;
     }
   } catch (e) {}
-  const txt = action === 'approve' ? 'Looks good, deliver the page.' : 'Apply these design tweaks:\n```json\n' + body + '\n```';
+  const txt = action === 'approve' ? 'Looks good, deliver the page.' : action === 'design' ? 'Move this page to Claude Design so I can keep editing it there.' : 'Apply these design tweaks:\n```json\n' + body + '\n```';
   try { await navigator.clipboard.writeText(txt); status('Copied. Paste it in the chat with Claude.'); }
   catch (e) { selectTab($('#tab-btn-finish')); const t = $('#json'); t.closest('details').open = true; t.value = txt; t.select(); status('Select the text in the Finish tab and paste it in the chat.'); }
   finally { ['#send', '#approve'].forEach(s => $(s).disabled = false); }
 }
 $('#send').addEventListener('click', () => deliver('apply'));
 $('#approve').addEventListener('click', () => deliver('approve'));
+$('#to-design').addEventListener('click', () => deliver('design'));
 $('#download').addEventListener('click', () => {
   const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(exportData(), null, 2)], { type: 'application/json' })), download: 'tweaks.json' });
   document.body.append(a); a.click(); a.remove();

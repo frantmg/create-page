@@ -9,7 +9,7 @@ Builds conversion-focused landing pages and full websites for healthcare practic
 2. Answer the questions Claude asks (click an option or type your own). About a minute.
 3. Claude writes the content, designs the page, reviews it, and fixes what the review finds. You get:
    - the page itself, shown right in the chat (plus a preview link when available), with a first draft sent while QA runs
-   - a tweak page to finish the design yourself: try palettes, fonts, sizes, corners and shadows, move, hide, swap, replace or add blocks (with live previews), edit text, undo and redo, then press Send to Claude
+   - a tweak page to finish the design yourself: try palettes, fonts, sizes, corners and shadows, move, hide, swap, replace or add blocks (with live previews), edit text, undo and redo, then press Send to Claude; or press Edit in Claude Design to keep editing on a Claude Design canvas and bring it back when you are done
    - the QA report
    - the list of `[placeholders]` the practice still needs to fill
    - for landing pages: the pre-launch compliance checklist and matching ad headlines
